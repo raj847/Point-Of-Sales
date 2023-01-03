@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -9,6 +10,8 @@ import (
 	"time"
 	"vandesar/entity"
 	"vandesar/service"
+
+	"github.com/dgrijalva/jwt-go"
 )
 
 type UserAPI interface {
@@ -52,12 +55,25 @@ func (u *userAPI) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//set jwt
+	expirationTime := time.Now().Add(5 * time.Hour)
+	claims := &entity.Claims{
+		UserID: eUser,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: expirationTime.Unix(),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte("rahasia-perusahaan"))
+
+	//set cookies
 	expiresAt := time.Now().Add(5 * time.Hour)
 
 	http.SetCookie(w, &http.Cookie{
 		Name:    "user_id",
 		Path:    "/",
-		Value:   strconv.Itoa(eUser),
+		Value:   tokenString,
 		Expires: expiresAt,
 	})
 
@@ -81,6 +97,7 @@ func (u *userAPI) Register(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(entity.NewErrorResponse("register data is empty"))
 		return
 	}
+	fmt.Println(user)
 	eUser, err := u.userService.Register(r.Context(), &entity.User{
 		ShopName: user.ShopName,
 		Email:    user.Email,

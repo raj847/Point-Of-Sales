@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/base64"
 	"vandesar/entity"
 
 	"gorm.io/gorm"
@@ -46,6 +47,7 @@ func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (enti
 }
 
 func (r *userRepository) CreateUser(ctx context.Context, user entity.User) (entity.User, error) {
+	user.Password = base64.StdEncoding.EncodeToString([]byte(user.Password))
 	err := r.db.WithContext(ctx).Create(&user).Error
 	if err != nil {
 		return entity.User{}, err

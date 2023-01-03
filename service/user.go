@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"net"
 	"net/mail"
@@ -39,6 +40,8 @@ func (s *userService) Login(ctx context.Context, user *entity.User) (id int, err
 		return 0, errors.New("user not found")
 	}
 
+	user.Password = base64.StdEncoding.EncodeToString([]byte(user.Password))
+
 	if user.Password != dbUser.Password {
 		return 0, errors.New("wrong email or password")
 	}
@@ -51,14 +54,23 @@ func (s *userService) Register(ctx context.Context, user *entity.User) (entity.U
 	if err != nil {
 		return *user, err
 	}
+	if dbUser.Email != "" || dbUser.ID != 0 {
+		return *user, errors.New("email already exists")
+	}
 
-	_, err = mail.ParseAddress(dbUser.Email)
+	_, err = mail.ParseAddress(user.Email)
 
 	if err != nil {
 		return *user, errors.New("format email invalid")
 	}
+	// err = validate.Validator.Struct(dbUser)
+	// fmt.Println(dbUser.Email)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return *user, errors.New("format email invalid")
+	// }
 
-	domain := strings.Split(dbUser.Email, "@")
+	domain := strings.Split(user.Email, "@")
 
 	_, err = net.LookupMX(domain[1])
 
@@ -66,22 +78,11 @@ func (s *userService) Register(ctx context.Context, user *entity.User) (entity.U
 		return *user, errors.New("your domain not found")
 	}
 
-	if dbUser.Email != "" || dbUser.ID != 0 {
-		return *user, errors.New("email already exists")
-	}
-
-	user.CreatedAt = time.Now()
-
-	newUser, err := s.userRepository.CreateUser(ctx, *user)
-	if err != nil {
-		return *user, err
-	}
-
-	isMoreThan8 := len(dbUser.Password) > 8
+	isMoreThan8 := len(user.Password) > 8
 
 	var isLower, isUpper, isSymbol bool
 
-	for _, char := range dbUser.Password {
+	for _, char := range user.Password {
 		if !isLower && unicode.IsLower(char) {
 			isLower = true
 		}
@@ -97,6 +98,13 @@ func (s *userService) Register(ctx context.Context, user *entity.User) (entity.U
 
 	if !isValid {
 		return *user, errors.New("password is not valid")
+	}
+
+	user.CreatedAt = time.Now()
+
+	newUser, err := s.userRepository.CreateUser(ctx, *user)
+	if err != nil {
+		return *user, err
 	}
 
 	return newUser, nil

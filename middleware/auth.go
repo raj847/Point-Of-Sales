@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"vandesar/entity"
+
+	"github.com/dgrijalva/jwt-go"
 )
 
 func Auth(next http.Handler) http.Handler {
@@ -22,8 +24,30 @@ func Auth(next http.Handler) http.Handler {
 				return
 			}
 		}
+		claims := &entity.Claims{}
 
-		ctx := context.WithValue(r.Context(), "id", c.Value)
+		tkn, err := jwt.ParseWithClaims(c.Value, claims, func(t *jwt.Token) (interface{}, error) {
+			return []byte("rahasia-perusahaan"), nil
+		})
+
+		if err != nil {
+			if err == jwt.ErrSignatureInvalid {
+				w.WriteHeader(http.StatusUnauthorized)
+				json.NewEncoder(w).Encode(entity.NewErrorResponse(err.Error()))
+				return
+			}
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(entity.NewErrorResponse(err.Error()))
+			return
+		}
+
+		if !tkn.Valid {
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(entity.NewErrorResponse(err.Error()))
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), "id", claims.UserID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
