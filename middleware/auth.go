@@ -54,6 +54,7 @@ func Auth(next http.Handler) http.Handler {
 				// return bad request, token expired
 				log.Println("token has expired")
 			}
+      
 			// return bad request, invalid token
 			log.Println("invalid token")
 		}
@@ -63,6 +64,7 @@ func Auth(next http.Handler) http.Handler {
 		fmt.Println("jwt token -> ", tokenString)
 		fmt.Println("user id -> ", claims.UserID)
 
+		fmt.Println(tkn.Claims, claims)
 		ctx := context.WithValue(r.Context(), "id", claims.UserID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
