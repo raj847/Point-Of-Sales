@@ -27,13 +27,12 @@ func Auth(next http.Handler) http.Handler {
 		}
 		claims := &entity.Claims{}
 
-		fmt.Println(c.Value)
-
 		tkn, err := jwt.ParseWithClaims(c.Value, claims, func(t *jwt.Token) (interface{}, error) {
 			return []byte("rahasia-perusahaan"), nil
 		})
 
 		if err != nil {
+			// fmt.Println(claims)
 			if err == jwt.ErrSignatureInvalid {
 				w.WriteHeader(http.StatusUnauthorized)
 				json.NewEncoder(w).Encode(entity.NewErrorResponse(err.Error()))
@@ -49,7 +48,9 @@ func Auth(next http.Handler) http.Handler {
 			json.NewEncoder(w).Encode(entity.NewErrorResponse(err.Error()))
 			return
 		}
+		claims = tkn.Claims.(*entity.Claims)
 
+		fmt.Println(tkn.Claims, claims)
 		ctx := context.WithValue(r.Context(), "id", claims.UserID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
