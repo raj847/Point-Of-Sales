@@ -3,11 +3,18 @@ package middleware
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"vandesar/entity"
 
 	"github.com/dgrijalva/jwt-go"
+)
+
+var (
+	ErrInvalidToken = errors.New("token is invalid")
+	ErrExpiredToken = errors.New("token has expired")
 )
 
 func Auth(next http.Handler) http.Handler {
@@ -25,30 +32,36 @@ func Auth(next http.Handler) http.Handler {
 				return
 			}
 		}
-		claims := &entity.Claims{}
 
-		fmt.Println(c.Value)
+		tokenString := c.Value
 
-		tkn, err := jwt.ParseWithClaims(c.Value, claims, func(t *jwt.Token) (interface{}, error) {
-			return []byte("rahasia-perusahaan"), nil
-		})
-
-		if err != nil {
-			if err == jwt.ErrSignatureInvalid {
-				w.WriteHeader(http.StatusUnauthorized)
-				json.NewEncoder(w).Encode(entity.NewErrorResponse(err.Error()))
-				return
+		keyFunc := func(token *jwt.Token) (interface{}, error) {
+			_, ok := token.Method.(*jwt.SigningMethodHMAC)
+			if !ok {
+				return nil, ErrInvalidToken
 			}
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(entity.NewErrorResponse(err.Error()))
-			return
+			return []byte("rahasia-perusahaan"), nil
 		}
 
-		if !tkn.Valid {
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(entity.NewErrorResponse(err.Error()))
-			return
+		// Parse methods use this callback function to supply
+		// the key for verification.  The function receives the parsed,
+		// but unverified Token.  This allows you to use properties in the
+		// Header of the token (such as `kid`) to identify which key to use.
+		jwtToken, err := jwt.ParseWithClaims(tokenString, &entity.Claims{}, keyFunc)
+		if err != nil {
+			verr, ok := err.(*jwt.ValidationError)
+			if ok && errors.Is(verr.Inner, ErrExpiredToken) {
+				// return bad request, token expired
+				log.Println("token has expired")
+			}
+			// return bad request, invalid token
+			log.Println("invalid token")
 		}
+
+		claims := jwtToken.Claims.(*entity.Claims)
+
+		fmt.Println("jwt token -> ", tokenString)
+		fmt.Println("user id -> ", claims.UserID)
 
 		ctx := context.WithValue(r.Context(), "id", claims.UserID)
 		next.ServeHTTP(w, r.WithContext(ctx))
