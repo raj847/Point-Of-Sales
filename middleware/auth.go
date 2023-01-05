@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"vandesar/entity"
 
@@ -25,6 +26,8 @@ func Auth(next http.Handler) http.Handler {
 			}
 		}
 		claims := &entity.Claims{}
+
+		fmt.Println(c.Value)
 
 		tkn, err := jwt.ParseWithClaims(c.Value, claims, func(t *jwt.Token) (interface{}, error) {
 			return []byte("rahasia-perusahaan"), nil

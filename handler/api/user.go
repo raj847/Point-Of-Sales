@@ -65,7 +65,7 @@ func (u *userAPI) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte("rahasia-perusahaan"))
+	tokenString, _ := token.SignedString([]byte("rahasia-perusahaan"))
 
 	//set cookies
 	expiresAt := time.Now().Add(5 * time.Hour)
