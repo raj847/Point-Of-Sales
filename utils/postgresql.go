@@ -21,7 +21,7 @@ func ConnectDB() error {
 		return err
 	}
 
-	conn.AutoMigrate(entity.User{})
+	conn.AutoMigrate(entity.User{}, entity.Product{})
 	SetupDBConnection(conn)
 
 	return nil
