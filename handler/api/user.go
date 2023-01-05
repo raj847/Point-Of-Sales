@@ -67,7 +67,7 @@ func (u *userAPI) Login(w http.ResponseWriter, r *http.Request) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, _ := token.SignedString([]byte("rahasia-perusahaan"))
 
-	//set cookies
+	// set cookies
 	expiresAt := time.Now().Add(5 * time.Hour)
 
 	http.SetCookie(w, &http.Cookie{
@@ -92,6 +92,7 @@ func (u *userAPI) Register(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(entity.NewErrorResponse("invalid decode json"))
 		return
 	}
+
 	if user.Email == "" || user.ShopName == "" || user.Password == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(entity.NewErrorResponse("register data is empty"))
