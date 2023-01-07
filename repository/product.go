@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"vandesar/entity"
 
 	"gorm.io/gorm"
@@ -13,6 +14,7 @@ type ProductRepository interface {
 	GetProductByID(ctx context.Context, id int) (entity.Product, error)
 	DeleteProduct(ctx context.Context, id int) error
 	UpdateProduct(ctx context.Context, products *entity.Product) error
+	GetProductBySearch(ctx context.Context, object string) ([]entity.Product, error)
 }
 
 type productRepository struct {
@@ -71,4 +73,15 @@ func (p *productRepository) UpdateProduct(ctx context.Context, products *entity.
 		return err
 	}
 	return nil // TODO: replace this
+}
+
+func (p *productRepository) GetProductBySearch(ctx context.Context, object string) ([]entity.Product, error) {
+	res := []entity.Product{}
+	err := p.db.WithContext(ctx).Table("products").Where("name LIKE ?", fmt.Sprintf("%s%s%s", "%", object, "%")).Find(&res).Error
+
+	if err != nil {
+		return []entity.Product{}, err
+	}
+
+	return res, nil // TODO: replace this
 }

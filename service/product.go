@@ -12,6 +12,7 @@ type ProductService interface {
 	GetProductByID(ctx context.Context, id int) (entity.Product, error)
 	UpdateProduct(ctx context.Context, Product *entity.Product) (entity.Product, error)
 	DeleteProduct(ctx context.Context, id int) error
+	GetProductBySearch(ctx context.Context, name string) ([]entity.Product, error)
 }
 
 type productService struct {
@@ -48,4 +49,8 @@ func (s *productService) UpdateProduct(ctx context.Context, product *entity.Prod
 
 func (s *productService) DeleteProduct(ctx context.Context, id int) error {
 	return s.prodRepo.DeleteProduct(ctx, id)
+}
+
+func (s *productService) GetProductBySearch(ctx context.Context, name string) ([]entity.Product, error) {
+	return s.prodRepo.GetProductBySearch(ctx, name)
 }

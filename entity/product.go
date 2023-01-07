@@ -15,6 +15,7 @@ type Product struct {
 
 type ProductRequest struct {
 	ID    int     `json:"id"`
+	Code  string  `json:"code"`
 	Name  string  `gorm:"type:varchar(255);unique_index" json:"name"`
 	Price float64 `json:"price"`
 	Stock int     `json:"stock"`

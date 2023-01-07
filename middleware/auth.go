@@ -3,7 +3,6 @@ package middleware
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"vandesar/entity"
 
@@ -50,7 +49,6 @@ func Auth(next http.Handler) http.Handler {
 		}
 		claims = tkn.Claims.(*entity.Claims)
 
-		fmt.Println(tkn.Claims, claims)
 		ctx := context.WithValue(r.Context(), "id", claims.UserID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

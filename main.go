@@ -76,7 +76,7 @@ func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 	MuxRoute(mux, "POST", "/api/v1/users/logout", middleware.Post(http.HandlerFunc(apiHandler.UserAPIHandler.Logout)))
 	MuxRoute(mux, "DELETE", "/api/v1/users/delete", middleware.Delete(http.HandlerFunc(apiHandler.UserAPIHandler.Delete)), "?user_id=")
 
-	MuxRoute(mux, "GET", "/api/v1/products/get", middleware.Get(middleware.Auth(http.HandlerFunc(apiHandler.ProductAPIHandler.GetProduct))), "?product_id=")
+	MuxRoute(mux, "GET", "/api/v1/products/get", middleware.Get(middleware.Auth(http.HandlerFunc(apiHandler.ProductAPIHandler.GetProduct))), "?product_id=", "?search=")
 	MuxRoute(mux, "POST", "/api/v1/products/create", middleware.Post(middleware.Auth(http.HandlerFunc(apiHandler.ProductAPIHandler.CreateNewProduct))))
 	MuxRoute(mux, "PUT", "/api/v1/products/update", middleware.Put(middleware.Auth(http.HandlerFunc(apiHandler.ProductAPIHandler.UpdateProduct))), "?product_id=")
 	MuxRoute(mux, "DELETE", "/api/v1/products/delete", middleware.Delete(middleware.Auth(http.HandlerFunc(apiHandler.ProductAPIHandler.DeleteProduct))), "?product_id=")

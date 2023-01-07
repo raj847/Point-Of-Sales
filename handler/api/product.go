@@ -2,14 +2,11 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 	"vandesar/entity"
 	"vandesar/service"
-
-	"github.com/google/uuid"
 )
 
 type ProductAPI interface {
@@ -37,27 +34,69 @@ func (p *productAPI) GetProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	productID := r.URL.Query().Get("product_id")
-	if len(productID) == 0 {
-		list, err := p.productService.GetProducts(r.Context(), userId)
+	// productID := r.URL.Query().Get("product_id")
+	// productName := r.URL.Query().Get("search")
+	product := r.URL.Query()
+
+	productID, foundID := product["product_id"]
+	productSearch, foundObject := product["search"]
+
+	if foundID == true {
+		pID, _ := strconv.Atoi(productID[0])
+		productbyID, err := p.productService.GetProductByID(r.Context(), pID)
 		if err != nil {
 			w.WriteHeader(500)
 			json.NewEncoder(w).Encode(entity.NewErrorResponse("error internal server"))
 			return
 		}
 		w.WriteHeader(200)
-		json.NewEncoder(w).Encode(list)
+		json.NewEncoder(w).Encode(productbyID)
+		return
+	} else if foundObject == true {
+		ProductBySearch, err := p.productService.GetProductBySearch(r.Context(), productSearch[0])
+		if err != nil {
+			w.WriteHeader(500)
+			json.NewEncoder(w).Encode(entity.NewErrorResponse("error internal server"))
+			return
+		}
+		w.WriteHeader(200)
+		json.NewEncoder(w).Encode(ProductBySearch)
+		// fmt.Println(productSearch)
 		return
 	}
-	pID, _ := strconv.Atoi(productID)
-	product, err := p.productService.GetProductByID(r.Context(), pID)
+
+	list, err := p.productService.GetProducts(r.Context(), userId)
 	if err != nil {
 		w.WriteHeader(500)
 		json.NewEncoder(w).Encode(entity.NewErrorResponse("error internal server"))
 		return
 	}
 	w.WriteHeader(200)
-	json.NewEncoder(w).Encode(product)
+	json.NewEncoder(w).Encode(list)
+
+	// listProduct, err := p.productService.GetProductBySearch(r.Context(), productName)
+	// if err != nil {
+	// 	w.WriteHeader(500)
+	// 	json.NewEncoder(w).Encode(entity.NewErrorResponse("error internal server"))
+	// 	return
+	// }
+	// if err != nil {
+	// 	w.WriteHeader(500)
+	// 	json.NewEncoder(w).Encode(entity.NewErrorResponse("error internal server"))
+	// 	return
+	// }
+	// if len(productID) == 0 {
+	// 	list, err := p.productService.GetProducts(r.Context(), userId)
+	// 	if err != nil {
+	// 		w.WriteHeader(500)
+	// 		json.NewEncoder(w).Encode(entity.NewErrorResponse("error internal server"))
+	// 		return
+	// 	}
+	// 	w.WriteHeader(200)
+	// 	json.NewEncoder(w).Encode(list)
+	// 	return
+	// }
+
 	// TODO: answer here
 }
 
@@ -80,7 +119,6 @@ func (p *productAPI) CreateNewProduct(w http.ResponseWriter, r *http.Request) {
 	// usid, err := strconv.Atoi(usidS)
 	// fmt.Println(usid)
 	userId := r.Context().Value("id").(int)
-	fmt.Println(userId)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(entity.NewErrorResponse("invalid user id"))
@@ -89,7 +127,7 @@ func (p *productAPI) CreateNewProduct(w http.ResponseWriter, r *http.Request) {
 
 	prod, err := p.productService.AddProduct(r.Context(), &entity.Product{
 		UserID: userId,
-		Code:   uuid.NewString(),
+		Code:   product.Code,
 		Name:   product.Name,
 		Price:  product.Price,
 		Stock:  product.Stock,
@@ -154,6 +192,7 @@ func (p *productAPI) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	products, err := p.productService.UpdateProduct(r.Context(), &entity.Product{
 		ID:    product.ID,
 		Name:  product.Name,
+		Code:  product.Code,
 		Price: product.Price,
 		Stock: product.Stock,
 	})
