@@ -188,9 +188,11 @@ func (p *productAPI) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(entity.NewErrorResponse("invalid user id"))
 		return
 	}
+	id := r.URL.Query().Get("product_id")
+	idInt, err := strconv.Atoi(id)
 
 	products, err := p.productService.UpdateProduct(r.Context(), &entity.Product{
-		ID:    product.ID,
+		ID:    idInt,
 		Name:  product.Name,
 		Code:  product.Code,
 		Price: product.Price,
