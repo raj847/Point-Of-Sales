@@ -53,3 +53,15 @@ func Auth(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
+
+// package middleware
+
+// import "net/http"
+
+// func Cors(next http.Handler) http.Handler {
+// 	return http.HandlerFunc(func enableCors(w *http.ResponseWriter, r *http.Request) {
+// 		dontol := "http://localhost:3000"
+// 		(*w).Header().Set("Access-Control-Allow-Origin", dontol)
+// 		next.ServeHTTP(w, r)
+// 	})
+// }
