@@ -152,12 +152,12 @@ func (s *UserService) RegisterAdmin(ctx context.Context, adminReq entity.AdminRe
 }
 
 func (s *UserService) RegisterCashier(ctx context.Context, cashierReq entity.CashierRegister) (entity.Cashier, error) {
-	existingAdmin, err := s.cashierRepository.GetCashierByUsername(ctx, cashierReq.Username)
+	existingCashier, err := s.cashierRepository.GetCashierByUsername(ctx, cashierReq.Username)
 	if err != nil {
 		return entity.Cashier{}, err
 	}
 
-	if existingAdmin.Username != "" || existingAdmin.ID != 0 {
+	if existingCashier.Username != "" || existingCashier.ID != 0 {
 		return entity.Cashier{}, errors.New("email already exists")
 	}
 

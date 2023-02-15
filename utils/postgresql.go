@@ -24,6 +24,7 @@ func ConnectDB() error {
 	conn.AutoMigrate(
 		entity.Admin{},
 		entity.Cashier{},
+		entity.Product{},
 	)
 
 	SetupDBConnection(conn)

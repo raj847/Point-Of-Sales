@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 	"vandesar/entity"
@@ -82,6 +83,7 @@ func (u *UserAPI) AdminLogin(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"user_id": int(eUser.ID),
+		"role":    "admin",
 		"message": "login success",
 	})
 }
@@ -204,6 +206,12 @@ func (u *UserAPI) CashierRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	id := r.Context().Value("id").(string)
+
+	adminId := strings.Split(id, "|")[1] // admin id
+	adminIdUint, err := strconv.Atoi(adminId)
+	user.AdminID = uint(adminIdUint)
+
 	eUser, err := u.userService.RegisterCashier(r.Context(), user)
 	if err != nil {
 		if strings.Contains(err.Error(), "password is not valid") {
@@ -219,6 +227,7 @@ func (u *UserAPI) CashierRegister(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"user_id": eUser.ID,
+		"role":    "cashier",
 		"message": "register success",
 	})
 }

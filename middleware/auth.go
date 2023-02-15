@@ -55,7 +55,9 @@ func MustAdmin(next http.Handler) http.Handler {
 			return
 		}
 
+		// userId | adminId
 		userIdWithAdminId := fmt.Sprintf("%d|%d", claims.UserID, claims.AdminID)
+
 		ctx := context.WithValue(r.Context(), "id", userIdWithAdminId)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -99,9 +101,9 @@ func Auth(next http.Handler) http.Handler {
 			json.NewEncoder(w).Encode(entity.NewErrorResponse(err.Error()))
 			return
 		}
-		claims = tkn.Claims.(*entity.Claims)
 
-		ctx := context.WithValue(r.Context(), "id", claims.UserID)
+		claims = tkn.Claims.(*entity.Claims)
+		ctx := context.WithValue(r.Context(), "id", claims.AdminID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

@@ -3,31 +3,32 @@ package service
 import (
 	"context"
 	"vandesar/entity"
-	"vandesar/repository"
 )
 
-type ProductService interface {
-	GetProducts(ctx context.Context, userId, adminId int) ([]entity.Product, error)
-	AddProduct(ctx context.Context, product *entity.Product) (entity.Product, error)
+type productRepository interface {
+	GetProductsByUserId(ctx context.Context, adminId uint) ([]entity.Product, error)
+	AddProduct(ctx context.Context, products *entity.Product) error
 	GetProductByID(ctx context.Context, id int) (entity.Product, error)
-	UpdateProduct(ctx context.Context, Product *entity.Product) (entity.Product, error)
 	DeleteProduct(ctx context.Context, id int) error
-	GetProductBySearch(ctx context.Context, name string) ([]entity.Product, error)
+	UpdateProduct(ctx context.Context, products *entity.Product) error
+	GetProductBySearch(ctx context.Context, object string) ([]entity.Product, error)
 }
 
-type productService struct {
-	prodRepo repository.ProductRepository
+type ProductService struct {
+	prodRepo productRepository
 }
 
-func NewProductService(prodRepo repository.ProductRepository) ProductService {
-	return &productService{prodRepo}
+func NewProductService(prodRepo productRepository) *ProductService {
+	return &ProductService{
+		prodRepo: prodRepo,
+	}
 }
 
-func (s *productService) GetProducts(ctx context.Context, userId, adminId int) ([]entity.Product, error) {
-	return s.prodRepo.GetProductsByUserId(ctx, userId, adminId)
+func (s *ProductService) GetProducts(ctx context.Context, adminId uint) ([]entity.Product, error) {
+	return s.prodRepo.GetProductsByUserId(ctx, adminId)
 }
 
-func (s *productService) AddProduct(ctx context.Context, product *entity.Product) (entity.Product, error) {
+func (s *ProductService) AddProduct(ctx context.Context, product *entity.Product) (entity.Product, error) {
 	err := s.prodRepo.AddProduct(ctx, product)
 	if err != nil {
 		return entity.Product{}, err
@@ -35,11 +36,11 @@ func (s *productService) AddProduct(ctx context.Context, product *entity.Product
 	return *product, nil
 }
 
-func (s *productService) GetProductByID(ctx context.Context, id int) (entity.Product, error) {
+func (s *ProductService) GetProductByID(ctx context.Context, id int) (entity.Product, error) {
 	return s.prodRepo.GetProductByID(ctx, id)
 }
 
-func (s *productService) UpdateProduct(ctx context.Context, product *entity.Product) (entity.Product, error) {
+func (s *ProductService) UpdateProduct(ctx context.Context, product *entity.Product) (entity.Product, error) {
 	err := s.prodRepo.UpdateProduct(ctx, product)
 	if err != nil {
 		return entity.Product{}, err
@@ -47,10 +48,10 @@ func (s *productService) UpdateProduct(ctx context.Context, product *entity.Prod
 	return *product, nil
 }
 
-func (s *productService) DeleteProduct(ctx context.Context, id int) error {
+func (s *ProductService) DeleteProduct(ctx context.Context, id int) error {
 	return s.prodRepo.DeleteProduct(ctx, id)
 }
 
-func (s *productService) GetProductBySearch(ctx context.Context, name string) ([]entity.Product, error) {
+func (s *ProductService) GetProductBySearch(ctx context.Context, name string) ([]entity.Product, error) {
 	return s.prodRepo.GetProductBySearch(ctx, name)
 }

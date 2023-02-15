@@ -2,7 +2,6 @@ package repository
 
 import (
 	"encoding/json"
-	"fmt"
 	"vandesar/entity"
 
 	"gorm.io/gorm"
@@ -54,10 +53,10 @@ func (c *transactionRepository) AddTrans(trans entity.TransactionReq) []error {
 			}
 
 			// validate stock
-			if product.Stock < v.Quantity {
-				errs = append(errs, fmt.Errorf("stock for product id %d not enough", product.ID))
-				continue
-			}
+			//if product.Stock < v.Quantity {
+			//	errs = append(errs, fmt.Errorf("stock for product id %d not enough", product.ID))
+			//	continue
+			//}
 
 			// update
 			id := v.ProductID

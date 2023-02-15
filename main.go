@@ -15,7 +15,8 @@ import (
 )
 
 type APIHandler struct {
-	UserAPIHandler *api.UserAPI
+	UserAPIHandler    *api.UserAPI
+	ProductAPIHandler *api.ProductAPI
 }
 
 func main() {
@@ -40,18 +41,54 @@ func main() {
 
 func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 	userRepo := repository.NewUserRepository(db)
+	productRepo := repository.NewProductRepository(db)
 
 	userService := service.NewUserService(userRepo)
+	productService := service.NewProductService(productRepo)
 
 	userAPIHandler := api.NewUserAPI(userService)
+	productAPIHandler := api.NewProductAPI(
+		productService,
+		userRepo,
+	)
 
-	apiHandler := APIHandler{UserAPIHandler: userAPIHandler}
+	apiHandler := APIHandler{
+		UserAPIHandler:    userAPIHandler,
+		ProductAPIHandler: productAPIHandler,
+	}
 
-	MuxRoute(mux, "POST", "/api/v1/users/admin/login", middleware.Post(http.HandlerFunc(apiHandler.UserAPIHandler.AdminLogin)))
 	MuxRoute(mux, "POST", "/api/v1/users/admin/register", middleware.Post(http.HandlerFunc(apiHandler.UserAPIHandler.AdminRegister)))
+	MuxRoute(mux, "POST", "/api/v1/users/admin/login", middleware.Post(http.HandlerFunc(apiHandler.UserAPIHandler.AdminLogin)))
+
+	MuxRoute(mux, "POST", "/api/v1/users/cashier/register",
+		middleware.Post(
+			middleware.MustAdmin(
+				http.HandlerFunc(apiHandler.UserAPIHandler.CashierRegister))))
 
 	MuxRoute(mux, "POST", "/api/v1/users/cashier/login", middleware.Post(http.HandlerFunc(apiHandler.UserAPIHandler.CashierLogin)))
-	MuxRoute(mux, "POST", "/api/v1/users/cashier/register", middleware.Post(http.HandlerFunc(apiHandler.UserAPIHandler.CashierRegister)))
+
+	MuxRoute(mux, "POST", "/api/v1/products/create",
+		middleware.Post(
+			middleware.Auth(
+				middleware.MustAdmin(
+					http.HandlerFunc(apiHandler.ProductAPIHandler.CreateNewProduct)))))
+
+	MuxRoute(mux, "GET", "/api/v1/products",
+		middleware.Get(
+			middleware.Auth(
+				http.HandlerFunc(apiHandler.ProductAPIHandler.GetAllProducts))))
+
+	MuxRoute(mux, "PUT", "/api/v1/products/update",
+		middleware.Post(
+			middleware.Auth(
+				middleware.MustAdmin(
+					http.HandlerFunc(apiHandler.ProductAPIHandler.UpdateProduct)))))
+
+	MuxRoute(mux, "DELETE", "/api/v1/products/delete",
+		middleware.Post(
+			middleware.Auth(
+				middleware.MustAdmin(
+					http.HandlerFunc(apiHandler.ProductAPIHandler.DeleteProduct)))))
 
 	return mux
 }
