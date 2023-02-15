@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"sync"
 	"vandesar/handler/api"
 	"vandesar/middleware"
 	"vandesar/repository"
@@ -16,44 +15,28 @@ import (
 )
 
 type APIHandler struct {
-	UserAPIHandler    api.UserAPI
-	ProductAPIHandler api.ProductAPI
+	UserAPIHandler    *api.UserAPI
+	ProductAPIHandler *api.ProductAPI
 }
 
-// func FlyURL() string {
-// 	return "https://final-web-app.fly.dev" // TODO: replace this
-// }
-
 func main() {
+	os.Setenv("DATABASE_URL", "postgres://root:secret@localhost:5432/pos")
 
-	//TODO: hapus jika sudah di deploy di fly.io
-	os.Setenv("DATABASE_URL", "postgres://postgres:postgres@localhost:9090/postgres")
+	mux := http.NewServeMux()
 
-	wg := sync.WaitGroup{}
+	err := utils.ConnectDB()
+	if err != nil {
+		panic(err)
+	}
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	db := utils.GetDBConnection()
+	mux = RunServer(db, mux)
 
-		mux := http.NewServeMux()
-
-		err := utils.ConnectDB()
-		if err != nil {
-			panic(err)
-		}
-
-		db := utils.GetDBConnection()
-
-		mux = RunServer(db, mux)
-
-		fmt.Println("Server is running on port 8080")
-		err = http.ListenAndServe(":8080", mux)
-		if err != nil {
-			panic(err)
-		}
-	}()
-
-	wg.Wait()
+	fmt.Println("Server is running on port 8080")
+	err = http.ListenAndServe(":8080", mux)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
@@ -64,46 +47,48 @@ func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 	productService := service.NewProductService(productRepo)
 
 	userAPIHandler := api.NewUserAPI(userService)
-	productAPIHandler := api.NewProductAPI(productService)
+	productAPIHandler := api.NewProductAPI(
+		productService,
+		userRepo,
+	)
 
 	apiHandler := APIHandler{
 		UserAPIHandler:    userAPIHandler,
 		ProductAPIHandler: productAPIHandler,
 	}
 
-	MuxRoute(mux, "POST", "/api/v1/users/login", middleware.Post(http.HandlerFunc(apiHandler.UserAPIHandler.Login)))
-	MuxRoute(mux, "POST", "/api/v1/users/register",
-		middleware.Post(
-			http.HandlerFunc(apiHandler.UserAPIHandler.Register),
-		),
-	)
-	MuxRoute(mux, "POST", "/api/v1/users/logout", middleware.Post(http.HandlerFunc(apiHandler.UserAPIHandler.Logout)))
-	MuxRoute(mux, "DELETE", "/api/v1/users/delete", middleware.Delete(http.HandlerFunc(apiHandler.UserAPIHandler.Delete)), "?user_id=")
+	MuxRoute(mux, "POST", "/api/v1/users/admin/register", middleware.Post(http.HandlerFunc(apiHandler.UserAPIHandler.AdminRegister)))
+	MuxRoute(mux, "POST", "/api/v1/users/admin/login", middleware.Post(http.HandlerFunc(apiHandler.UserAPIHandler.AdminLogin)))
 
-	MuxRoute(mux, "GET", "/api/v1/products/get", middleware.Get(middleware.Auth(http.HandlerFunc(apiHandler.ProductAPIHandler.GetProduct))), "?product_id=", "?search=")
+	MuxRoute(mux, "POST", "/api/v1/users/cashier/register",
+		middleware.Post(
+			middleware.MustAdmin(
+				http.HandlerFunc(apiHandler.UserAPIHandler.CashierRegister))))
+
+	MuxRoute(mux, "POST", "/api/v1/users/cashier/login", middleware.Post(http.HandlerFunc(apiHandler.UserAPIHandler.CashierLogin)))
 
 	MuxRoute(mux, "POST", "/api/v1/products/create",
 		middleware.Post(
 			middleware.Auth(
 				middleware.MustAdmin(
-					http.HandlerFunc(apiHandler.ProductAPIHandler.CreateNewProduct),
-				),
-			),
-		),
-	)
+					http.HandlerFunc(apiHandler.ProductAPIHandler.CreateNewProduct)))))
 
-	MuxRoute(mux, "PUT", "/api/v1/products/update", middleware.Put(
-		middleware.Auth(
-			middleware.MustAdmin(
-				http.HandlerFunc(apiHandler.ProductAPIHandler.UpdateProduct),
-			),
-		),
-	), "?product_id=")
+	MuxRoute(mux, "GET", "/api/v1/products",
+		middleware.Get(
+			middleware.Auth(
+				http.HandlerFunc(apiHandler.ProductAPIHandler.GetAllProducts))))
 
-	MuxRoute(mux, "DELETE", "/api/v1/products/delete", middleware.Delete(middleware.Auth(http.HandlerFunc(apiHandler.ProductAPIHandler.DeleteProduct))), "?product_id=")
+	MuxRoute(mux, "PUT", "/api/v1/products/update",
+		middleware.Post(
+			middleware.Auth(
+				middleware.MustAdmin(
+					http.HandlerFunc(apiHandler.ProductAPIHandler.UpdateProduct)))))
 
-	// do cron job for rekap each month
-	service.DoRekapEachMonth()
+	MuxRoute(mux, "DELETE", "/api/v1/products/delete",
+		middleware.Post(
+			middleware.Auth(
+				middleware.MustAdmin(
+					http.HandlerFunc(apiHandler.ProductAPIHandler.DeleteProduct)))))
 
 	return mux
 }

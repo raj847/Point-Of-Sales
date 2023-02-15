@@ -2,6 +2,8 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
+	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"strconv"
@@ -10,42 +12,26 @@ import (
 	"vandesar/service"
 )
 
-type ProductAPI interface {
-	GetProduct(w http.ResponseWriter, r *http.Request)
-	CreateNewProduct(w http.ResponseWriter, r *http.Request)
-	DeleteProduct(w http.ResponseWriter, r *http.Request)
-	UpdateProduct(w http.ResponseWriter, r *http.Request)
+type ProductAPI struct {
+	productService    *service.ProductService
+	cashierRepository service.CashierRepository
 }
 
-type productAPI struct {
-	productService service.ProductService
-}
-
-func NewProductAPI(productService service.ProductService) *productAPI {
-	return &productAPI{productService}
-}
-
-func (p *productAPI) GetProduct(w http.ResponseWriter, r *http.Request) {
-	// usidS := fmt.Sprintf("%s", r.Context().Value("id"))
-	// usid, err := strconv.Atoi(usidS)
-
-	userIdWIthAdminId := r.Context().Value("id").(string)
-
-	userIdStr := strings.Split(userIdWIthAdminId, "|")[0]  // user id
-	adminIdStr := strings.Split(userIdWIthAdminId, "|")[1] // admin id
-
-	// convert to int
-	userId, _ := strconv.Atoi(userIdStr)
-	adminId, _ := strconv.Atoi(adminIdStr)
-
-	if userId == 0 || adminId == 0 {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(entity.NewErrorResponse("invalid user id"))
-		return
+func NewProductAPI(
+	productService *service.ProductService,
+	cashierRepository service.CashierRepository,
+) *ProductAPI {
+	return &ProductAPI{
+		productService:    productService,
+		cashierRepository: cashierRepository,
 	}
+}
 
-	// productID := r.URL.Query().Get("product_id")
-	// productName := r.URL.Query().Get("search")
+func (p *ProductAPI) GetAllProducts(w http.ResponseWriter, r *http.Request) {
+	adminId := r.Context().Value("id").(uint)
+
+	fmt.Println(adminId)
+
 	product := r.URL.Query()
 
 	productID, foundID := product["product_id"]
@@ -59,6 +45,13 @@ func (p *productAPI) GetProduct(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(entity.NewErrorResponse("error internal server"))
 			return
 		}
+
+		if productbyID.UserID != adminId {
+			w.WriteHeader(401)
+			json.NewEncoder(w).Encode(entity.NewErrorResponse("error unauthorized user id"))
+			return
+		}
+
 		w.WriteHeader(200)
 		json.NewEncoder(w).Encode(productbyID)
 		return
@@ -69,48 +62,31 @@ func (p *productAPI) GetProduct(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(entity.NewErrorResponse("error internal server"))
 			return
 		}
+
+		productsFiltered := []entity.Product{}
+		for _, v := range ProductBySearch {
+			if v.UserID == adminId {
+				productsFiltered = append(productsFiltered, v)
+			}
+		}
+
 		w.WriteHeader(200)
-		json.NewEncoder(w).Encode(ProductBySearch)
-		// fmt.Println(productSearch)
+		json.NewEncoder(w).Encode(productsFiltered)
 		return
 	}
 
-	list, err := p.productService.GetProducts(r.Context(), userId, adminId)
+	list, err := p.productService.GetProducts(r.Context(), adminId)
 	if err != nil {
 		w.WriteHeader(500)
 		json.NewEncoder(w).Encode(entity.NewErrorResponse("error internal server"))
 		return
 	}
+
 	w.WriteHeader(200)
 	json.NewEncoder(w).Encode(list)
-
-	// listProduct, err := p.productService.GetProductBySearch(r.Context(), productName)
-	// if err != nil {
-	// 	w.WriteHeader(500)
-	// 	json.NewEncoder(w).Encode(entity.NewErrorResponse("error internal server"))
-	// 	return
-	// }
-	// if err != nil {
-	// 	w.WriteHeader(500)
-	// 	json.NewEncoder(w).Encode(entity.NewErrorResponse("error internal server"))
-	// 	return
-	// }
-	// if len(productID) == 0 {
-	// 	list, err := p.productService.GetProducts(r.Context(), userId)
-	// 	if err != nil {
-	// 		w.WriteHeader(500)
-	// 		json.NewEncoder(w).Encode(entity.NewErrorResponse("error internal server"))
-	// 		return
-	// 	}
-	// 	w.WriteHeader(200)
-	// 	json.NewEncoder(w).Encode(list)
-	// 	return
-	// }
-
-	// TODO: answer here
 }
 
-func (p *productAPI) CreateNewProduct(w http.ResponseWriter, r *http.Request) {
+func (p *ProductAPI) CreateNewProduct(w http.ResponseWriter, r *http.Request) {
 	var product entity.ProductRequest
 
 	err := json.NewDecoder(r.Body).Decode(&product)
@@ -125,10 +101,12 @@ func (p *productAPI) CreateNewProduct(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(entity.NewErrorResponse("invalid name request"))
 		return
 	}
-	// usidS := fmt.Sprintf("%s", r.Context().Value("id"))
-	// usid, err := strconv.Atoi(usidS)
-	// fmt.Println(usid)
-	userId := r.Context().Value("id").(int)
+
+	id := r.Context().Value("id").(string)
+
+	adminId := strings.Split(id, "|")[1] // admin id
+	adminIdUint, err := strconv.Atoi(adminId)
+
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(entity.NewErrorResponse("invalid user id"))
@@ -136,7 +114,7 @@ func (p *productAPI) CreateNewProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	prod, err := p.productService.AddProduct(r.Context(), &entity.Product{
-		UserID: userId,
+		UserID: uint(adminIdUint),
 		Code:   product.Code,
 		Name:   product.Name,
 		Price:  product.Price,
@@ -150,17 +128,13 @@ func (p *productAPI) CreateNewProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(201)
-	json.NewEncoder(w).Encode(map[string]interface{}{"user_id": userId,
+	json.NewEncoder(w).Encode(map[string]interface{}{"user_id": adminIdUint,
 		"product_id": prod.ID,
 		"message":    "success create new product"})
-
-	// TODO: answer here
 }
 
-func (p *productAPI) DeleteProduct(w http.ResponseWriter, r *http.Request) {
-	// usidS := fmt.Sprintf("%s", r.Context().Value("id"))
-	// usid, err := strconv.Atoi(usidS)
-	userId := r.Context().Value("id").(int)
+func (p *ProductAPI) DeleteProduct(w http.ResponseWriter, r *http.Request) {
+	userId := r.Context().Value("id").(uint)
 	if userId == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(entity.NewErrorResponse("invalid user id"))
@@ -183,7 +157,7 @@ func (p *productAPI) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	// TODO: answer here
 }
 
-func (p *productAPI) UpdateProduct(w http.ResponseWriter, r *http.Request) {
+func (p *ProductAPI) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	var product entity.ProductRequest
 
 	err := json.NewDecoder(r.Body).Decode(&product)
@@ -193,7 +167,7 @@ func (p *productAPI) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(entity.NewErrorResponse("invalid decode json"))
 		return
 	}
-	userId := r.Context().Value("id").(int)
+	userId := r.Context().Value("id").(uint)
 	if userId == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(entity.NewErrorResponse("invalid user id"))
@@ -203,12 +177,15 @@ func (p *productAPI) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	idInt, err := strconv.Atoi(id)
 
 	products, err := p.productService.UpdateProduct(r.Context(), &entity.Product{
-		ID:    idInt,
-		Name:  product.Name,
-		Code:  product.Code,
-		Price: product.Price,
-		Stock: product.Stock,
-		Modal: product.Modal,
+		Model: gorm.Model{
+			ID: uint(idInt),
+		},
+		Code:   product.Code,
+		Name:   product.Name,
+		Price:  product.Price,
+		Stock:  product.Stock,
+		UserID: 0,
+		Modal:  product.Modal,
 	})
 
 	if err != nil {
@@ -221,6 +198,4 @@ func (p *productAPI) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{"user_id": userId,
 		"product_id": products.ID,
 		"message":    "success update product"})
-
-	// TODO: answer here
 }
