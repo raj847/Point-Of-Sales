@@ -9,7 +9,7 @@ import (
 )
 
 type ProductRepository interface {
-	GetProductsByUserId(ctx context.Context, id int) ([]entity.Product, error)
+	GetProductsByUserId(ctx context.Context, userId, adminId int) ([]entity.Product, error)
 	AddProduct(ctx context.Context, products *entity.Product) error
 	GetProductByID(ctx context.Context, id int) (entity.Product, error)
 	DeleteProduct(ctx context.Context, id int) error
@@ -25,9 +25,9 @@ func NewProductRepository(db *gorm.DB) ProductRepository {
 	return &productRepository{db}
 }
 
-func (p *productRepository) GetProductsByUserId(ctx context.Context, id int) ([]entity.Product, error) {
+func (p *productRepository) GetProductsByUserId(ctx context.Context, userId, adminId int) ([]entity.Product, error) {
 	res := []entity.Product{}
-	cek, err := p.db.WithContext(ctx).Table("products").Select("*").Where("user_id = ? ", id).Rows()
+	cek, err := p.db.WithContext(ctx).Table("products").Select("*").Where("admin_id = ? ", adminId).Rows()
 	if err != nil {
 		return []entity.Product{}, err
 	}

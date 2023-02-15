@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"vandesar/entity"
 	"vandesar/service"
 )
@@ -20,15 +21,24 @@ type productAPI struct {
 	productService service.ProductService
 }
 
-func NewProductAPI(categoryService service.ProductService) *productAPI {
-	return &productAPI{categoryService}
+func NewProductAPI(productService service.ProductService) *productAPI {
+	return &productAPI{productService}
 }
 
 func (p *productAPI) GetProduct(w http.ResponseWriter, r *http.Request) {
 	// usidS := fmt.Sprintf("%s", r.Context().Value("id"))
 	// usid, err := strconv.Atoi(usidS)
-	userId := r.Context().Value("id").(int)
-	if userId == 0 {
+
+	userIdWIthAdminId := r.Context().Value("id").(string)
+
+	userIdStr := strings.Split(userIdWIthAdminId, "|")[0]  // user id
+	adminIdStr := strings.Split(userIdWIthAdminId, "|")[1] // admin id
+
+	// convert to int
+	userId, _ := strconv.Atoi(userIdStr)
+	adminId, _ := strconv.Atoi(adminIdStr)
+
+	if userId == 0 || adminId == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(entity.NewErrorResponse("invalid user id"))
 		return
@@ -65,7 +75,7 @@ func (p *productAPI) GetProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	list, err := p.productService.GetProducts(r.Context(), userId)
+	list, err := p.productService.GetProducts(r.Context(), userId, adminId)
 	if err != nil {
 		w.WriteHeader(500)
 		json.NewEncoder(w).Encode(entity.NewErrorResponse("error internal server"))
@@ -131,6 +141,7 @@ func (p *productAPI) CreateNewProduct(w http.ResponseWriter, r *http.Request) {
 		Name:   product.Name,
 		Price:  product.Price,
 		Stock:  product.Stock,
+		Modal:  product.Modal,
 	})
 	if err != nil {
 		w.WriteHeader(500)
@@ -197,6 +208,7 @@ func (p *productAPI) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 		Code:  product.Code,
 		Price: product.Price,
 		Stock: product.Stock,
+		Modal: product.Modal,
 	})
 
 	if err != nil {

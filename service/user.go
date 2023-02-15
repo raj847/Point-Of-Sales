@@ -46,6 +46,9 @@ func (s *userService) Login(ctx context.Context, user *entity.User) (id int, err
 		return 0, errors.New("wrong email or password")
 	}
 
+	user.ID = dbUser.ID
+	user.Role = dbUser.Role
+
 	return dbUser.ID, nil
 }
 

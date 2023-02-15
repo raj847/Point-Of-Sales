@@ -45,10 +45,14 @@ func (u *userAPI) Login(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(entity.NewErrorResponse("email or password is empty"))
 		return
 	}
-	eUser, err := u.userService.Login(r.Context(), &entity.User{
+
+	userReq := &entity.User{
 		Email:    user.Email,
 		Password: user.Password,
-	})
+	}
+
+	eUser, err := u.userService.Login(r.Context(), userReq)
+
 	if err != nil {
 		w.WriteHeader(500)
 		json.NewEncoder(w).Encode(entity.NewErrorResponse("error internal server"))
@@ -58,7 +62,8 @@ func (u *userAPI) Login(w http.ResponseWriter, r *http.Request) {
 	//set jwt
 	expirationTime := time.Now().Add(5 * time.Hour)
 	claims := &entity.Claims{
-		UserID: eUser,
+		UserID: userReq.ID,
+		Role:   userReq.Role,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),
 		},
