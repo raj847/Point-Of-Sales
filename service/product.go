@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"vandesar/entity"
 )
 
@@ -41,10 +42,20 @@ func (s *ProductService) GetProductByID(ctx context.Context, id int) (entity.Pro
 }
 
 func (s *ProductService) UpdateProduct(ctx context.Context, product *entity.Product) (entity.Product, error) {
-	err := s.prodRepo.UpdateProduct(ctx, product)
+	existingProduct, err := s.GetProductByID(ctx, int(product.ID))
 	if err != nil {
 		return entity.Product{}, err
 	}
+
+	if existingProduct.UserID != product.UserID {
+		return entity.Product{}, errors.New("you are not allowed to update this product")
+	}
+
+	err = s.prodRepo.UpdateProduct(ctx, product)
+	if err != nil {
+		return entity.Product{}, err
+	}
+
 	return *product, nil
 }
 
