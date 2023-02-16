@@ -42,6 +42,12 @@ func (p *ProductAPI) GetAllProducts(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		if productByID.ID == 0 {
+			w.WriteHeader(404)
+			_ = json.NewEncoder(w).Encode(entity.NewErrorResponse("error product not found"))
+			return
+		}
+
 		if productByID.UserID != adminId {
 			w.WriteHeader(401)
 			_ = json.NewEncoder(w).Encode(entity.NewErrorResponse("error unauthorized user id"))

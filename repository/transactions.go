@@ -67,9 +67,34 @@ func (c *transactionRepository) AddTrans(ctx context.Context, trans entity.Trans
 	return errs
 }
 
-func (c *transactionRepository) UpdateTrans(trans entity.Transaction) error {
-	c.db.Table("transactions").Where("id = ?", trans.ID).Updates(&trans)
-	return nil
+func (c *transactionRepository) UpdateTrans(trans entity.TransactionReq, tranId uint) (entity.Transaction, error) {
+	var result entity.Transaction
+
+	cartList, _ := json.Marshal(trans.CartList)
+	transaction := entity.Transaction{
+		Model: gorm.Model{
+			ID: tranId,
+		},
+		UserID:      trans.UserID,
+		Debt:        trans.Debt,
+		Status:      trans.Status,
+		Money:       trans.Money,
+		CartList:    cartList,
+		TotalPrice:  trans.TotalPrice,
+		Notes:       trans.Notes,
+		TotalProfit: trans.TotalProfit,
+	}
+
+	err := c.db.
+		Table("transactions").
+		Where("id = ?", tranId).
+		Updates(&transaction).
+		First(&result).Error
+	if err != nil {
+		return entity.Transaction{}, err
+	}
+
+	return result, nil
 }
 
 func (c *transactionRepository) DeleteTrans(id uint) error {
@@ -114,13 +139,14 @@ func (c *transactionRepository) ReadTransByCashier(userId uint) ([]entity.Transa
 	return resp, nil
 }
 
-func (c *transactionRepository) ReadTransByAdmin(adminId int) ([]entity.TransactionReq, error) {
+func (c *transactionRepository) ReadTransByAdmin(adminId uint) ([]entity.TransactionReq, error) {
 	var transactions []entity.Transaction
 	err := c.db.
 		Table("transactions").
 		Select("*").
-		Joins("JOIN users ON users.id = transactions.user_id").
-		Where("users.admin_id = ?", adminId).
+		Joins("JOIN cashiers ON cashiers.id = transactions.user_id").
+		Where("cashiers.admin_id = ?", adminId).
+		Where("transactions.deleted_at IS NULL").
 		Scan(&transactions).Error
 	if err != nil {
 		return nil, err

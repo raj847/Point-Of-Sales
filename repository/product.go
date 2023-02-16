@@ -18,7 +18,13 @@ func NewProductRepository(db *gorm.DB) *ProductRepository {
 
 func (p *ProductRepository) GetProductsByUserId(ctx context.Context, adminId uint) ([]entity.Product, error) {
 	var res []entity.Product
-	cek, err := p.db.WithContext(ctx).Table("products").Select("*").Where("user_id = ? ", adminId).Rows()
+	cek, err := p.db.
+		WithContext(ctx).
+		Table("products").
+		Select("*").
+		Where("user_id = ? ", adminId).
+		Where("deleted_at IS NULL").
+		Rows()
 	if err != nil {
 		return []entity.Product{}, err
 	}
@@ -40,7 +46,12 @@ func (p *ProductRepository) AddProduct(ctx context.Context, products *entity.Pro
 
 func (p *ProductRepository) GetProductByID(ctx context.Context, id int) (entity.Product, error) {
 	res := entity.Product{}
-	err := p.db.WithContext(ctx).Table("products").Where("id = ?", id).Find(&res).Error
+	err := p.db.
+		WithContext(ctx).
+		Table("products").
+		Where("id = ?", id).
+		Where("deleted_at IS NULL").
+		Find(&res).Error
 
 	if err != nil {
 		return entity.Product{}, err
@@ -51,10 +62,7 @@ func (p *ProductRepository) GetProductByID(ctx context.Context, id int) (entity.
 
 func (p *ProductRepository) DeleteProduct(ctx context.Context, id int) error {
 	err := p.db.WithContext(ctx).Delete(&entity.Product{}, id).Error
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (p *ProductRepository) UpdateProduct(ctx context.Context, products *entity.Product) error {
@@ -67,7 +75,12 @@ func (p *ProductRepository) UpdateProduct(ctx context.Context, products *entity.
 
 func (p *ProductRepository) GetProductBySearch(ctx context.Context, object string) ([]entity.Product, error) {
 	var res []entity.Product
-	err := p.db.WithContext(ctx).Table("products").Where("name LIKE ?", fmt.Sprintf("%s%s%s", "%", object, "%")).Find(&res).Error
+	err := p.db.
+		WithContext(ctx).
+		Table("products").
+		Where("name LIKE ?", fmt.Sprintf("%s%s%s", "%", object, "%")).
+		Where("deleted_at IS NULL").
+		Find(&res).Error
 
 	if err != nil {
 		return []entity.Product{}, err

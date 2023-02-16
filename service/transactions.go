@@ -7,10 +7,10 @@ import (
 
 type transactionRepository interface {
 	AddTrans(ctx context.Context, trans entity.TransactionReq) []error
-	UpdateTrans(trans entity.Transaction) error
+	UpdateTrans(trans entity.TransactionReq, tranId uint) (entity.Transaction, error)
 	DeleteTrans(id uint) error
 	ReadTransByCashier(userId uint) ([]entity.TransactionReq, error)
-	ReadTransByAdmin(int) ([]entity.TransactionReq, error)
+	ReadTransByAdmin(uint) ([]entity.TransactionReq, error)
 }
 
 type TransactionService struct {
@@ -28,12 +28,13 @@ func (t *TransactionService) AddTrans(ctx context.Context, trans entity.Transact
 	}
 	return nil
 }
-func (t *TransactionService) UpdateTrans(trans entity.Transaction) (entity.Transaction, error) {
-	err := t.transRepo.UpdateTrans(trans)
+func (t *TransactionService) UpdateTrans(trans entity.TransactionReq, tranId uint) (entity.Transaction, error) {
+	result, err := t.transRepo.UpdateTrans(trans, tranId)
 	if err != nil {
 		return entity.Transaction{}, err
 	}
-	return trans, nil
+
+	return result, nil
 }
 func (t *TransactionService) DeleteTrans(id uint) error {
 	return t.transRepo.DeleteTrans(id)
@@ -43,6 +44,6 @@ func (t *TransactionService) ReadTransCashier(id uint) ([]entity.TransactionReq,
 	return t.transRepo.ReadTransByCashier(id)
 }
 
-func (t *TransactionService) ReadTransAdmin(adminId int) ([]entity.TransactionReq, error) {
+func (t *TransactionService) ReadTransAdmin(adminId uint) ([]entity.TransactionReq, error) {
 	return t.transRepo.ReadTransByAdmin(adminId)
 }
