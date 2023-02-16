@@ -33,19 +33,17 @@ type UserRepository interface {
 }
 
 type UserService struct {
-	adminRepository   AdminRepository
-	cashierRepository CashierRepository
+	userRepository UserRepository
 }
 
 func NewUserService(userRepository UserRepository) *UserService {
 	return &UserService{
-		adminRepository:   userRepository,
-		cashierRepository: userRepository,
+		userRepository: userRepository,
 	}
 }
 
 func (s *UserService) LoginAdmin(ctx context.Context, adminReq entity.AdminLogin) (id entity.Admin, err error) {
-	existingAdmin, err := s.adminRepository.GetAdminByEmail(ctx, adminReq.Email)
+	existingAdmin, err := s.userRepository.GetAdminByEmail(ctx, adminReq.Email)
 	if err != nil {
 		return entity.Admin{}, errors.New("user not found")
 	}
@@ -60,12 +58,11 @@ func (s *UserService) LoginAdmin(ctx context.Context, adminReq entity.AdminLogin
 	if utils.CheckPassword(adminReq.Password, existingAdmin.Password) != nil {
 		return entity.Admin{}, errors.New("password not match")
 	}
-
 	return existingAdmin, nil
 }
 
 func (s *UserService) LoginCashier(ctx context.Context, cashierReq entity.CashierLogin) (id entity.Cashier, err error) {
-	existingCashier, err := s.cashierRepository.GetCashierByUsername(ctx, cashierReq.Username)
+	existingCashier, err := s.userRepository.GetCashierByUsername(ctx, cashierReq.Username)
 	if err != nil {
 		return entity.Cashier{}, err
 	}
@@ -80,12 +77,11 @@ func (s *UserService) LoginCashier(ctx context.Context, cashierReq entity.Cashie
 	if utils.CheckPassword(cashierReq.Password, existingCashier.Password) != nil {
 		return entity.Cashier{}, errors.New("password not match")
 	}
-
 	return existingCashier, nil
 }
 
 func (s *UserService) RegisterAdmin(ctx context.Context, adminReq entity.AdminRegister) (entity.Admin, error) {
-	existingAdmin, err := s.adminRepository.GetAdminByEmail(ctx, adminReq.Email)
+	existingAdmin, err := s.userRepository.GetAdminByEmail(ctx, adminReq.Email)
 	if err != nil {
 		return entity.Admin{}, err
 	}
@@ -143,7 +139,7 @@ func (s *UserService) RegisterAdmin(ctx context.Context, adminReq entity.AdminRe
 	}
 	admin.Password = hashedPassword
 
-	newUser, err := s.adminRepository.CreateAdmin(ctx, admin)
+	newUser, err := s.userRepository.CreateAdmin(ctx, admin)
 	if err != nil {
 		return entity.Admin{}, err
 	}
@@ -152,7 +148,7 @@ func (s *UserService) RegisterAdmin(ctx context.Context, adminReq entity.AdminRe
 }
 
 func (s *UserService) RegisterCashier(ctx context.Context, cashierReq entity.CashierRegister) (entity.Cashier, error) {
-	existingCashier, err := s.cashierRepository.GetCashierByUsername(ctx, cashierReq.Username)
+	existingCashier, err := s.userRepository.GetCashierByUsername(ctx, cashierReq.Username)
 	if err != nil {
 		return entity.Cashier{}, err
 	}
@@ -200,7 +196,7 @@ func (s *UserService) RegisterCashier(ctx context.Context, cashierReq entity.Cas
 
 	cashier.Password = hashedPassword
 
-	newUser, err := s.cashierRepository.CreateCashier(ctx, cashier)
+	newUser, err := s.userRepository.CreateCashier(ctx, cashier)
 	if err != nil {
 		return entity.Cashier{}, err
 	}
