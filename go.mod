@@ -8,7 +8,10 @@ require (
 	gorm.io/gorm v1.24.3
 )
 
-require gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
+require (
+	github.com/rs/cors v1.8.3 // indirect
+	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
+)
 
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/rs/cors"
 	"log"
 	"net/http"
 	"os"
@@ -37,8 +38,10 @@ func main() {
 	db := utils.GetDBConnection()
 	mux = RunServer(db, mux)
 
+	handler := cors.Default().Handler(mux)
+
 	fmt.Println("Server is running on port 8080")
-	err = http.ListenAndServe(":8080", mux)
+	err = http.ListenAndServe(":8080", handler)
 	if err != nil {
 		panic(err)
 	}
