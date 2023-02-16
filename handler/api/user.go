@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 	"vandesar/entity"
@@ -206,10 +205,7 @@ func (u *UserAPI) CashierRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id := r.Context().Value("id").(string)
-
-	adminId := strings.Split(id, "|")[1] // admin id
-	adminIdUint, err := strconv.Atoi(adminId)
+	adminIdUint := r.Context().Value("id").(uint)
 	user.AdminID = uint(adminIdUint)
 
 	eUser, err := u.userService.RegisterCashier(r.Context(), user)

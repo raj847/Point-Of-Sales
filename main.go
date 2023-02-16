@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"vandesar/handler/api"
@@ -15,16 +16,20 @@ import (
 )
 
 type APIHandler struct {
-	UserAPIHandler    *api.UserAPI
-	ProductAPIHandler *api.ProductAPI
+	UserAPIHandler        *api.UserAPI
+	ProductAPIHandler     *api.ProductAPI
+	TransactionAPIHandler *api.TransactionAPI
 }
 
 func main() {
-	os.Setenv("DATABASE_URL", "postgres://root:secret@localhost:5432/pos")
+	err := os.Setenv("DATABASE_URL", "postgres://root:secret@localhost:5432/pos")
+	if err != nil {
+		log.Println("cannot set env variable: ", err)
+	}
 
 	mux := http.NewServeMux()
 
-	err := utils.ConnectDB()
+	err = utils.ConnectDB()
 	if err != nil {
 		panic(err)
 	}
@@ -42,19 +47,23 @@ func main() {
 func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 	userRepo := repository.NewUserRepository(db)
 	productRepo := repository.NewProductRepository(db)
+	transactRepo := repository.NewTransactionRepository(db)
 
 	userService := service.NewUserService(userRepo)
 	productService := service.NewProductService(productRepo)
+	transactService := service.NewTransactionService(transactRepo)
 
 	userAPIHandler := api.NewUserAPI(userService)
 	productAPIHandler := api.NewProductAPI(
 		productService,
 		userRepo,
 	)
+	transactionAPIHandler := api.NewTransactionAPI(transactService)
 
 	apiHandler := APIHandler{
-		UserAPIHandler:    userAPIHandler,
-		ProductAPIHandler: productAPIHandler,
+		UserAPIHandler:        userAPIHandler,
+		ProductAPIHandler:     productAPIHandler,
+		TransactionAPIHandler: transactionAPIHandler,
 	}
 
 	MuxRoute(mux, "POST", "/api/v1/users/admin/register", middleware.Post(http.HandlerFunc(apiHandler.UserAPIHandler.AdminRegister)))
@@ -89,6 +98,18 @@ func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 			middleware.Auth(
 				middleware.MustAdmin(
 					http.HandlerFunc(apiHandler.ProductAPIHandler.DeleteProduct)))))
+
+	MuxRoute(mux, "POST", "/api/v1/transactions/create",
+		middleware.Post(
+			middleware.Auth(
+				middleware.MustCashier(
+					http.HandlerFunc(apiHandler.TransactionAPIHandler.CreateTransaction)))))
+
+	MuxRoute(mux, "GET", "/api/v1/transactions",
+		middleware.Get(
+			middleware.Auth(
+				middleware.MustCashier(
+					http.HandlerFunc(apiHandler.TransactionAPIHandler.GetAllTransactions)))))
 
 	return mux
 }
