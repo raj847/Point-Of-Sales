@@ -2,9 +2,8 @@ package api
 
 import (
 	"encoding/json"
-	"log"
+	"errors"
 	"net/http"
-	"strings"
 	"time"
 	"vandesar/entity"
 	"vandesar/service"
@@ -25,40 +24,35 @@ func (u *UserAPI) AdminLogin(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&adminReq)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(entity.NewErrorResponse("invalid decode json"))
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("invalid decode json"))
 		return
 	}
 
 	if adminReq.Email == "" || adminReq.Password == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(entity.NewErrorResponse("email or password is empty"))
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("email or password is empty"))
 		return
 	}
 
 	eUser, err := u.userService.LoginAdmin(r.Context(), adminReq)
 	if err != nil {
-		if strings.Contains(err.Error(), "user not found") {
-			w.WriteHeader(404)
-			w.Write([]byte(err.Error()))
+		if errors.Is(err, service.ErrUserNotFound) {
+			WriteJSON(w, http.StatusNotFound, entity.NewErrorResponse(err.Error()))
 			return
-		} else if strings.Contains(err.Error(), "email not found") {
-			w.WriteHeader(404)
-			w.Write([]byte(err.Error()))
+		} else if errors.Is(err, service.ErrUserNotFound) {
+			WriteJSON(w, http.StatusNotFound, entity.NewErrorResponse(err.Error()))
 			return
-		} else if strings.Contains(err.Error(), "password not match") {
-			w.WriteHeader(404)
-			w.Write([]byte(err.Error()))
+		} else if errors.Is(err, service.ErrUserPasswordDontMatch) {
+			WriteJSON(w, http.StatusNotFound, entity.NewErrorResponse(err.Error()))
 			return
 		}
 
-		w.WriteHeader(500)
-		json.NewEncoder(w).Encode(entity.NewErrorResponse("error internal server"))
+		WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
 		return
 	}
 
 	expirationTime := time.Now().Add(5 * time.Hour)
-	claims := &entity.Claims{
+
+	claims := entity.Claims{
 		UserID:  eUser.ID,
 		AdminID: eUser.ID,
 		Role:    "admin",
@@ -67,10 +61,9 @@ func (u *UserAPI) AdminLogin(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &claims)
 	tokenString, _ := token.SignedString([]byte("rahasia-perusahaan"))
 
-	//set cookies
 	expiresAt := time.Now().Add(5 * time.Hour)
 	http.SetCookie(w, &http.Cookie{
 		Name:    "user_id",
@@ -79,12 +72,13 @@ func (u *UserAPI) AdminLogin(w http.ResponseWriter, r *http.Request) {
 		Expires: expiresAt,
 	})
 
-	w.WriteHeader(200)
-	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+	response := map[string]any{
 		"user_id": int(eUser.ID),
 		"role":    "admin",
 		"message": "login success",
-	})
+	}
+
+	WriteJSON(w, http.StatusOK, response)
 }
 
 func (u *UserAPI) AdminRegister(w http.ResponseWriter, r *http.Request) {
@@ -92,47 +86,38 @@ func (u *UserAPI) AdminRegister(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		log.Println(err.Error())
-		json.NewEncoder(w).Encode(entity.NewErrorResponse("invalid decode json"))
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("invalid decode json"))
 		return
 	}
 
 	if user.Email == "" || user.ShopName == "" || user.Password == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(entity.NewErrorResponse("register data is empty"))
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("register data is empty"))
 		return
 	}
 
 	eUser, err := u.userService.RegisterAdmin(r.Context(), user)
 	if err != nil {
-		if strings.Contains(err.Error(), "email already exists") {
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(entity.NewErrorResponse("email already exists"))
+		if errors.Is(err, service.ErrUserAlreadyExists) {
+			WriteJSON(w, http.StatusConflict, entity.NewErrorResponse(err.Error()))
 			return
-		} else if strings.Contains(err.Error(), "format email invalid") {
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(entity.NewErrorResponse("format email invalid"))
+		} else if errors.Is(err, service.ErrEmailInvalid) {
+			WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse(err.Error()))
 			return
-		} else if strings.Contains(err.Error(), "your domain not found") {
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(entity.NewErrorResponse("your domain not found"))
-			return
-		} else if strings.Contains(err.Error(), "password is not valid") {
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(entity.NewErrorResponse("password is not valid"))
+		} else if errors.Is(err, service.ErrPasswordInvalid) {
+			WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse(err.Error()))
 			return
 		}
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(entity.NewErrorResponse("error internal server"))
+
+		WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	response := map[string]any{
 		"user_id": eUser.ID,
 		"message": "register success",
-	})
+	}
+
+	WriteJSON(w, http.StatusCreated, response)
 }
 
 func (u *UserAPI) CashierLogin(w http.ResponseWriter, r *http.Request) {
@@ -140,27 +125,31 @@ func (u *UserAPI) CashierLogin(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&cashierReq)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		log.Println(err.Error())
-		json.NewEncoder(w).Encode(entity.NewErrorResponse("invalid decode json"))
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("invalid decode json"))
 		return
 	}
 
 	if cashierReq.Username == "" || cashierReq.Password == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(entity.NewErrorResponse("email or password is empty"))
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("username or password is empty"))
 		return
 	}
 
 	eUser, err := u.userService.LoginCashier(r.Context(), cashierReq)
 	if err != nil {
-		w.WriteHeader(500)
-		json.NewEncoder(w).Encode(entity.NewErrorResponse("error internal server"))
+		if errors.Is(err, service.ErrUserNotFound) {
+			WriteJSON(w, http.StatusNotFound, entity.NewErrorResponse(err.Error()))
+			return
+		} else if errors.Is(err, service.ErrUserPasswordDontMatch) {
+			WriteJSON(w, http.StatusNotFound, entity.NewErrorResponse(err.Error()))
+			return
+		}
+
+		WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
 		return
 	}
 
 	expirationTime := time.Now().Add(5 * time.Hour)
-	claims := &entity.Claims{
+	claims := entity.Claims{
 		UserID:  eUser.ID,
 		AdminID: eUser.AdminID,
 		Role:    "cashier",
@@ -169,10 +158,9 @@ func (u *UserAPI) CashierLogin(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &claims)
 	tokenString, _ := token.SignedString([]byte("rahasia-perusahaan"))
 
-	//set cookies
 	expiresAt := time.Now().Add(5 * time.Hour)
 	http.SetCookie(w, &http.Cookie{
 		Name:    "user_id",
@@ -181,11 +169,13 @@ func (u *UserAPI) CashierLogin(w http.ResponseWriter, r *http.Request) {
 		Expires: expiresAt,
 	})
 
-	w.WriteHeader(200)
-	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+	response := map[string]any{
 		"user_id": int(eUser.ID),
+		"role":    "cashier",
 		"message": "login success",
-	})
+	}
+
+	WriteJSON(w, http.StatusOK, response)
 }
 
 func (u *UserAPI) CashierRegister(w http.ResponseWriter, r *http.Request) {
@@ -193,15 +183,12 @@ func (u *UserAPI) CashierRegister(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		log.Println(err.Error())
-		json.NewEncoder(w).Encode(entity.NewErrorResponse("invalid decode json"))
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("invalid decode json"))
 		return
 	}
 
 	if user.Username == "" || user.Password == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(entity.NewErrorResponse("register data is empty"))
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("register data is empty"))
 		return
 	}
 
@@ -210,22 +197,28 @@ func (u *UserAPI) CashierRegister(w http.ResponseWriter, r *http.Request) {
 
 	eUser, err := u.userService.RegisterCashier(r.Context(), user)
 	if err != nil {
-		if strings.Contains(err.Error(), "password is not valid") {
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(entity.NewErrorResponse("password is not valid"))
+		if errors.Is(err, service.ErrUserAlreadyExists) {
+			WriteJSON(w, http.StatusConflict, entity.NewErrorResponse(err.Error()))
+			return
+		} else if errors.Is(err, service.ErrPasswordInvalid) {
+			WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse(err.Error()))
+			return
+		} else if errors.Is(err, service.ErrUserPasswordDontMatch) {
+			WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse(err.Error()))
 			return
 		}
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(entity.NewErrorResponse("error internal server"))
+
+		WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+	response := map[string]any{
 		"user_id": eUser.ID,
-		"role":    "cashier",
+		"role":   "cashier",
 		"message": "register success",
-	})
+	}
+
+	WriteJSON(w, http.StatusCreated, response)
 }
 
 func (u *UserAPI) Logout(w http.ResponseWriter, r *http.Request) {

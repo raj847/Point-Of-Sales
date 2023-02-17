@@ -9,15 +9,15 @@ import (
 	"gorm.io/gorm"
 )
 
-type transactionRepository struct {
+type TransactionRepository struct {
 	db *gorm.DB
 }
 
-func NewTransactionRepository(db *gorm.DB) *transactionRepository {
-	return &transactionRepository{db}
+func NewTransactionRepository(db *gorm.DB) *TransactionRepository {
+	return &TransactionRepository{db}
 }
 
-func (c *transactionRepository) AddTrans(ctx context.Context, trans entity.TransactionReq) []error {
+func (c *TransactionRepository) AddTrans(ctx context.Context, trans entity.TransactionReq) []error {
 	var errs []error
 
 	err := c.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
@@ -67,7 +67,7 @@ func (c *transactionRepository) AddTrans(ctx context.Context, trans entity.Trans
 	return errs
 }
 
-func (c *transactionRepository) UpdateTrans(trans entity.TransactionReq, tranId uint) (entity.Transaction, error) {
+func (c *TransactionRepository) UpdateTrans(trans entity.TransactionReq, tranId uint) (entity.Transaction, error) {
 	var result entity.Transaction
 
 	cartList, _ := json.Marshal(trans.CartList)
@@ -97,7 +97,7 @@ func (c *transactionRepository) UpdateTrans(trans entity.TransactionReq, tranId 
 	return result, nil
 }
 
-func (c *transactionRepository) DeleteTrans(id uint) error {
+func (c *TransactionRepository) DeleteTrans(id uint) error {
 	err := c.db.Delete(&entity.Transaction{}, id).Error
 	if err != nil {
 		return err
@@ -105,7 +105,7 @@ func (c *transactionRepository) DeleteTrans(id uint) error {
 	return nil
 }
 
-func (c *transactionRepository) ReadTransByCashier(userId uint) ([]entity.TransactionReq, error) {
+func (c *TransactionRepository) ReadTransByCashier(userId uint) ([]entity.TransactionReq, error) {
 	var transactions []entity.Transaction
 	err := c.db.
 		Table("transactions").
@@ -139,7 +139,7 @@ func (c *transactionRepository) ReadTransByCashier(userId uint) ([]entity.Transa
 	return resp, nil
 }
 
-func (c *transactionRepository) ReadTransByAdmin(adminId uint) ([]entity.TransactionReq, error) {
+func (c *TransactionRepository) ReadTransByAdmin(adminId uint) ([]entity.TransactionReq, error) {
 	var transactions []entity.Transaction
 	err := c.db.
 		Table("transactions").

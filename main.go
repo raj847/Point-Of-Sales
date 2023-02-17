@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/rs/cors"
 	"log"
 	"net/http"
 	"os"
@@ -11,6 +10,8 @@ import (
 	"vandesar/repository"
 	"vandesar/service"
 	"vandesar/utils"
+
+	"github.com/rs/cors"
 
 	_ "github.com/lib/pq"
 	"gorm.io/gorm"
@@ -25,14 +26,14 @@ type APIHandler struct {
 func main() {
 	err := os.Setenv("DATABASE_URL", "postgres://root:secret@localhost:5432/pos")
 	if err != nil {
-		log.Println("cannot set env variable: ", err)
+		log.Fatalf("cannot set env: %v", err)
 	}
 
 	mux := http.NewServeMux()
 
 	err = utils.ConnectDB()
 	if err != nil {
-		panic(err)
+		log.Fatalf("cannot connect to database: %v", err)
 	}
 
 	db := utils.GetDBConnection()
@@ -43,7 +44,7 @@ func main() {
 	fmt.Println("Server is running on port 8080")
 	err = http.ListenAndServe(":8080", handler)
 	if err != nil {
-		panic(err)
+		log.Fatalf("cannot start server: %v", err)
 	}
 }
 
@@ -57,10 +58,7 @@ func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 	transactService := service.NewTransactionService(transactRepo)
 
 	userAPIHandler := api.NewUserAPI(userService)
-	productAPIHandler := api.NewProductAPI(
-		productService,
-		userRepo,
-	)
+	productAPIHandler := api.NewProductAPI(productService,userService)
 	transactionAPIHandler := api.NewTransactionAPI(transactService)
 
 	apiHandler := APIHandler{

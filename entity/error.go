@@ -4,8 +4,8 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-func NewErrorResponse(msg string) ErrorResponse {
+func NewErrorResponse(message string) ErrorResponse {
 	return ErrorResponse{
-		Error: msg,
+		Error: message,
 	}
 }

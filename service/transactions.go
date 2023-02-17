@@ -3,21 +3,14 @@ package service
 import (
 	"context"
 	"vandesar/entity"
+	"vandesar/repository"
 )
 
-type transactionRepository interface {
-	AddTrans(ctx context.Context, trans entity.TransactionReq) []error
-	UpdateTrans(trans entity.TransactionReq, tranId uint) (entity.Transaction, error)
-	DeleteTrans(id uint) error
-	ReadTransByCashier(userId uint) ([]entity.TransactionReq, error)
-	ReadTransByAdmin(uint) ([]entity.TransactionReq, error)
-}
-
 type TransactionService struct {
-	transRepo transactionRepository
+	transRepo *repository.TransactionRepository
 }
 
-func NewTransactionService(transRepo transactionRepository) *TransactionService {
+func NewTransactionService(transRepo *repository.TransactionRepository) *TransactionService {
 	return &TransactionService{transRepo}
 }
 
