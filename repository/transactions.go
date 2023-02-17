@@ -1,42 +1,37 @@
 package repository
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"vandesar/entity"
 
 	"gorm.io/gorm"
 )
 
-type TransactionRepository interface {
-	AddTrans(trans entity.TransactionReq) []error
-	UpdateTrans(trans entity.Transaction) error
-	DeleteTrans(id int) error
-	ReadTrans() ([]entity.TransactionReq, error)
-}
-
-type transactionRepository struct {
+type TransactionRepository struct {
 	db *gorm.DB
 }
 
-func NewTransactionRepository(db *gorm.DB) TransactionRepository {
-	return &transactionRepository{db}
+func NewTransactionRepository(db *gorm.DB) *TransactionRepository {
+	return &TransactionRepository{db}
 }
 
-// func (c *transactionRepository) AddTrans(prods []entity.Prods, money float64, quantity float64, totalharga float64, catatan string) error {
-func (c *transactionRepository) AddTrans(trans entity.TransactionReq) []error {
-	errs := []error{}
+func (c *TransactionRepository) AddTrans(ctx context.Context, trans entity.TransactionReq) []error {
+	var errs []error
 
-	err := c.db.Transaction(func(tx *gorm.DB) error {
-		products, _ := json.Marshal(trans.Products)
+	err := c.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		cartList, _ := json.Marshal(trans.CartList)
+
 		transaction := entity.Transaction{
-			UserID:     trans.UserID,
-			Debt:       trans.Debt,
-			Status:     trans.Status,
-			Money:      trans.Money,
-			Products:   products,
-			TotalHarga: trans.TotalHarga,
-			Notes:      trans.Notes,
-			TotalLaba:  trans.TotalLaba,
+			UserID:      trans.UserID,
+			Debt:        trans.Debt,
+			Status:      trans.Status,
+			Money:       trans.Money,
+			CartList:    cartList,
+			TotalPrice:  trans.TotalPrice,
+			Notes:       trans.Notes,
+			TotalProfit: trans.TotalProfit,
 		}
 
 		err := tx.Create(&transaction).Error
@@ -44,23 +39,19 @@ func (c *transactionRepository) AddTrans(trans entity.TransactionReq) []error {
 			return err
 		}
 
-		for _, v := range trans.Products {
-			// get product
+		for _, v := range trans.CartList {
 			var product entity.Product
 			err = tx.Table("products").Where("id = ?", v.ProductID).First(&product).Error
 			if err != nil {
 				return err
 			}
 
-			// validate stock
-			//if product.Stock < v.Quantity {
-			//	errs = append(errs, fmt.Errorf("stock for product id %d not enough", product.ID))
-			//	continue
-			//}
+			if product.Stock < v.Quantity {
+				errs = append(errs, fmt.Errorf("stock for product id %d not enough", product.ID))
+				continue
+			}
 
-			// update
-			id := v.ProductID
-			err = tx.Table("products").Where("id = ?", id).Update("stock", gorm.Expr("stock - ?", v.Quantity)).Error
+			err = tx.Table("products").Where("id = ?", v.ProductID).Update("stock", gorm.Expr("stock - ?", v.Quantity)).Error
 			if err != nil {
 				return err
 			}
@@ -73,41 +64,109 @@ func (c *transactionRepository) AddTrans(trans entity.TransactionReq) []error {
 		errs = append(errs, err)
 	}
 
-	return errs // TODO: replace this
+	return errs
 }
 
-func (c *transactionRepository) UpdateTrans(trans entity.Transaction) error {
-	c.db.Table("transactions").Where("id = ?", trans.ID).Updates(&trans)
-	return nil // TODO: replace this
+func (c *TransactionRepository) UpdateTrans(trans entity.TransactionReq, tranId uint) (entity.Transaction, error) {
+	var result entity.Transaction
+
+	cartList, _ := json.Marshal(trans.CartList)
+	transaction := entity.Transaction{
+		Model: gorm.Model{
+			ID: tranId,
+		},
+		UserID:      trans.UserID,
+		Debt:        trans.Debt,
+		Status:      trans.Status,
+		Money:       trans.Money,
+		CartList:    cartList,
+		TotalPrice:  trans.TotalPrice,
+		Notes:       trans.Notes,
+		TotalProfit: trans.TotalProfit,
+	}
+
+	err := c.db.
+		Table("transactions").
+		Where("id = ?", tranId).
+		Updates(&transaction).
+		First(&result).Error
+	if err != nil {
+		return entity.Transaction{}, err
+	}
+
+	return result, nil
 }
 
-func (c *transactionRepository) DeleteTrans(id int) error {
+func (c *TransactionRepository) DeleteTrans(id uint) error {
 	err := c.db.Delete(&entity.Transaction{}, id).Error
 	if err != nil {
 		return err
 	}
-	return nil // TODO: replace this
+	return nil
 }
 
-func (c *transactionRepository) ReadTrans() ([]entity.TransactionReq, error) {
-	transactions := []entity.Transaction{}
-	c.db.Table("transactions").Select("*").Scan(&transactions)
+func (c *TransactionRepository) ReadTransByCashier(userId uint) ([]entity.TransactionReq, error) {
+	var transactions []entity.Transaction
+	err := c.db.
+		Table("transactions").
+		Select("*").
+		Where("user_id = ?", userId).
+		Where("deleted_at IS NULL").
+		Scan(&transactions).Error
+
+	if err != nil {
+		return nil, err
+	}
 
 	resp := make([]entity.TransactionReq, 0, len(transactions))
 
 	for _, v := range transactions {
-		var products []entity.Prods
-		json.Unmarshal(v.Products, &products)
+		var cartList []entity.Prods
+		_ = json.Unmarshal(v.CartList, &cartList)
 
 		resp = append(resp, entity.TransactionReq{
-			UserID:     v.UserID,
-			Debt:       v.Debt,
-			Status:     v.Status,
-			Money:      v.Money,
-			Products:   products,
-			TotalHarga: v.TotalHarga,
-			Notes:      v.Notes,
-			TotalLaba:  v.TotalLaba,
+			UserID:      v.UserID,
+			Debt:        v.Debt,
+			Status:      v.Status,
+			Money:       v.Money,
+			CartList:    cartList,
+			TotalPrice:  v.TotalPrice,
+			Notes:       v.Notes,
+			TotalProfit: v.TotalProfit,
+		})
+	}
+
+	return resp, nil
+}
+
+func (c *TransactionRepository) ReadTransByAdmin(adminId uint) ([]entity.TransactionReq, error) {
+	var transactions []entity.Transaction
+	err := c.db.
+		Table("transactions").
+		Select("*").
+		Joins("JOIN cashiers ON cashiers.id = transactions.user_id").
+		Where("cashiers.admin_id = ?", adminId).
+		Where("transactions.deleted_at IS NULL").
+		Scan(&transactions).Error
+	if err != nil {
+		return nil, err
+	}
+
+	resp := make([]entity.TransactionReq, 0, len(transactions))
+
+	for _, v := range transactions {
+		var cartList []entity.Prods
+		_ = json.Unmarshal(v.CartList, &cartList)
+
+		resp = append(resp, entity.TransactionReq{
+			UserID:      v.UserID,
+			Debt:        v.Debt,
+			Status:      v.Status,
+			Money:       v.Money,
+			CartList:    cartList,
+			TotalPrice:  v.TotalPrice,
+			Notes:       v.Notes,
+			TotalProfit: v.TotalProfit,
 		})
 	}
 

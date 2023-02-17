@@ -8,75 +8,52 @@ import (
 	"strings"
 	"unicode"
 	"vandesar/entity"
+	"vandesar/repository"
 	"vandesar/utils"
 )
 
-type AdminRepository interface {
-	GetAdminByID(ctx context.Context, id uint) (entity.Admin, error)
-	GetAdminByEmail(ctx context.Context, email string) (entity.Admin, error)
-	CreateAdmin(ctx context.Context, user entity.Admin) (entity.Admin, error)
-	UpdateAdmin(ctx context.Context, user entity.Admin) (entity.Admin, error)
-	DeleteAdmin(ctx context.Context, id uint) error
-}
-
-type CashierRepository interface {
-	GetCashierByID(ctx context.Context, id uint) (entity.Cashier, error)
-	GetCashierByUsername(ctx context.Context, username string) (entity.Cashier, error)
-	CreateCashier(ctx context.Context, user entity.Cashier) (entity.Cashier, error)
-	UpdateCashier(ctx context.Context, user entity.Cashier) (entity.Cashier, error)
-	DeleteCashier(ctx context.Context, id uint) error
-}
-
-type UserRepository interface {
-	AdminRepository
-	CashierRepository
-}
 
 type UserService struct {
-	userRepository UserRepository
+	userRepository *repository.UserRepository
 }
 
-func NewUserService(userRepository UserRepository) *UserService {
+func NewUserService(userRepository *repository.UserRepository) *UserService {
 	return &UserService{
 		userRepository: userRepository,
 	}
 }
 
+var (
+	ErrUserNotFound = errors.New("user not found")
+	ErrUserPasswordDontMatch = errors.New("password not match")
+	ErrUserAlreadyExists = errors.New("user already exists")
+	ErrEmailInvalid = errors.New("email invalid")
+	ErrPasswordInvalid = errors.New("password invalid")
+)
+
 func (s *UserService) LoginAdmin(ctx context.Context, adminReq entity.AdminLogin) (id entity.Admin, err error) {
 	existingAdmin, err := s.userRepository.GetAdminByEmail(ctx, adminReq.Email)
 	if err != nil {
-		return entity.Admin{}, errors.New("user not found")
-	}
-
-	if existingAdmin.Email == "" || existingAdmin.ID == 0 {
-		return entity.Admin{}, errors.New("user not found")
-	}
-	if existingAdmin.Email != adminReq.Email {
-		return entity.Admin{}, errors.New("email not found")
+		return entity.Admin{}, ErrUserNotFound
 	}
 
 	if utils.CheckPassword(adminReq.Password, existingAdmin.Password) != nil {
-		return entity.Admin{}, errors.New("password not match")
+		return entity.Admin{}, ErrUserPasswordDontMatch
 	}
+
 	return existingAdmin, nil
 }
 
 func (s *UserService) LoginCashier(ctx context.Context, cashierReq entity.CashierLogin) (id entity.Cashier, err error) {
 	existingCashier, err := s.userRepository.GetCashierByUsername(ctx, cashierReq.Username)
 	if err != nil {
-		return entity.Cashier{}, err
-	}
-
-	if existingCashier.Username == "" || existingCashier.ID == 0 {
-		return entity.Cashier{}, errors.New("user not found")
-	}
-	if existingCashier.Username != cashierReq.Username {
-		return entity.Cashier{}, errors.New("username not found")
+		return entity.Cashier{}, ErrUserNotFound
 	}
 
 	if utils.CheckPassword(cashierReq.Password, existingCashier.Password) != nil {
-		return entity.Cashier{}, errors.New("password not match")
+		return entity.Cashier{}, ErrUserPasswordDontMatch
 	}
+
 	return existingCashier, nil
 }
 
@@ -86,44 +63,24 @@ func (s *UserService) RegisterAdmin(ctx context.Context, adminReq entity.AdminRe
 		return entity.Admin{}, err
 	}
 
-	if existingAdmin.Email != "" || existingAdmin.ID != 0 {
-		return entity.Admin{}, errors.New("email already exists")
+	if existingAdmin.ID != 0 {
+		return entity.Admin{}, ErrUserAlreadyExists
 	}
 
 	_, err = mail.ParseAddress(adminReq.Email)
 	if err != nil {
-		return entity.Admin{}, errors.New("format email invalid")
+		return entity.Admin{}, ErrEmailInvalid
 	}
 
 	domain := strings.Split(adminReq.Email, "@")
 	_, err = net.LookupMX(domain[1])
 	if err != nil {
-		return entity.Admin{}, errors.New("your domain not found")
+		return entity.Admin{}, ErrEmailInvalid
 	}
 
-	var lower, upper, symbol bool
-	moreThan := len(adminReq.Password) > 8
-
-	for _, char := range adminReq.Password {
-		if unicode.IsLower(char) {
-			lower = true
-			continue
-		}
-
-		if unicode.IsUpper(char) {
-			upper = true
-			continue
-		}
-
-		if unicode.IsSymbol(char) || unicode.IsPunct(char) {
-			symbol = true
-			continue
-		}
-	}
-
-	valid := moreThan && lower && upper && symbol
-	if !valid {
-		return entity.Admin{}, errors.New("password is not valid")
+	validPassword := validatePassword(adminReq.Password)
+	if !validPassword {
+		return entity.Admin{}, ErrPasswordInvalid
 	}
 
 	admin := entity.Admin{
@@ -137,6 +94,7 @@ func (s *UserService) RegisterAdmin(ctx context.Context, adminReq entity.AdminRe
 	if err != nil {
 		return entity.Admin{}, err
 	}
+
 	admin.Password = hashedPassword
 
 	newUser, err := s.userRepository.CreateAdmin(ctx, admin)
@@ -153,33 +111,13 @@ func (s *UserService) RegisterCashier(ctx context.Context, cashierReq entity.Cas
 		return entity.Cashier{}, err
 	}
 
-	if existingCashier.Username != "" || existingCashier.ID != 0 {
-		return entity.Cashier{}, errors.New("email already exists")
+	if existingCashier.ID != 0 {
+		return entity.Cashier{}, ErrUserAlreadyExists
 	}
 
-	var lower, upper, symbol bool
-	moreThan := len(cashierReq.Password) > 8
-
-	for _, char := range cashierReq.Password {
-		if unicode.IsLower(char) {
-			lower = true
-			continue
-		}
-
-		if unicode.IsUpper(char) {
-			upper = true
-			continue
-		}
-
-		if unicode.IsSymbol(char) || unicode.IsPunct(char) {
-			symbol = true
-			continue
-		}
-	}
-
-	valid := moreThan && lower && upper && symbol
-	if !valid {
-		return entity.Cashier{}, errors.New("password is not valid")
+	validPassword := validatePassword(cashierReq.Password)
+	if !validPassword {
+		return entity.Cashier{}, ErrPasswordInvalid
 	}
 
 	cashier := entity.Cashier{
@@ -202,4 +140,28 @@ func (s *UserService) RegisterCashier(ctx context.Context, cashierReq entity.Cas
 	}
 
 	return newUser, nil
+}
+
+func validatePassword(password string) bool {
+	var lower, upper, symbol bool
+	moreThan := len(password) > 8
+
+	for _, char := range password {
+		if unicode.IsLower(char) {
+			lower = true
+			continue
+		}
+
+		if unicode.IsUpper(char) {
+			upper = true
+			continue
+		}
+
+		if unicode.IsSymbol(char) || unicode.IsPunct(char) {
+			symbol = true
+			continue
+		}
+	}
+
+	return  moreThan && lower && upper && symbol
 }

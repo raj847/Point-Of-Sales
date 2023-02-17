@@ -4,22 +4,14 @@ import (
 	"context"
 	"errors"
 	"vandesar/entity"
+	"vandesar/repository"
 )
 
-type productRepository interface {
-	GetProductsByUserId(ctx context.Context, adminId uint) ([]entity.Product, error)
-	AddProduct(ctx context.Context, products *entity.Product) error
-	GetProductByID(ctx context.Context, id int) (entity.Product, error)
-	DeleteProduct(ctx context.Context, id int) error
-	UpdateProduct(ctx context.Context, products *entity.Product) error
-	GetProductBySearch(ctx context.Context, object string) ([]entity.Product, error)
-}
-
 type ProductService struct {
-	prodRepo productRepository
+	prodRepo *repository.ProductRepository
 }
 
-func NewProductService(prodRepo productRepository) *ProductService {
+func NewProductService(prodRepo *repository.ProductRepository) *ProductService {
 	return &ProductService{
 		prodRepo: prodRepo,
 	}
@@ -29,19 +21,19 @@ func (s *ProductService) GetProducts(ctx context.Context, adminId uint) ([]entit
 	return s.prodRepo.GetProductsByUserId(ctx, adminId)
 }
 
-func (s *ProductService) AddProduct(ctx context.Context, product *entity.Product) (entity.Product, error) {
+func (s *ProductService) AddProduct(ctx context.Context, product entity.Product) (entity.Product, error) {
 	err := s.prodRepo.AddProduct(ctx, product)
 	if err != nil {
 		return entity.Product{}, err
 	}
-	return *product, nil
+	return product, nil
 }
 
 func (s *ProductService) GetProductByID(ctx context.Context, id int) (entity.Product, error) {
 	return s.prodRepo.GetProductByID(ctx, id)
 }
 
-func (s *ProductService) UpdateProduct(ctx context.Context, product *entity.Product) (entity.Product, error) {
+func (s *ProductService) UpdateProduct(ctx context.Context, product entity.Product) (entity.Product, error) {
 	existingProduct, err := s.GetProductByID(ctx, int(product.ID))
 	if err != nil {
 		return entity.Product{}, err
@@ -56,13 +48,13 @@ func (s *ProductService) UpdateProduct(ctx context.Context, product *entity.Prod
 		return entity.Product{}, err
 	}
 
-	return *product, nil
+	return product, nil
 }
 
 func (s *ProductService) DeleteProduct(ctx context.Context, id int) error {
 	return s.prodRepo.DeleteProduct(ctx, id)
 }
 
-func (s *ProductService) GetProductBySearch(ctx context.Context, name string) ([]entity.Product, error) {
-	return s.prodRepo.GetProductBySearch(ctx, name)
+func (s *ProductService) SearchProducts(ctx context.Context, name string) ([]entity.Product, error) {
+	return s.prodRepo.SearchProducts(ctx, name)
 }

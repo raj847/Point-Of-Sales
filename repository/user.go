@@ -7,43 +7,44 @@ import (
 	"gorm.io/gorm"
 )
 
-type userRepository struct {
+type UserRepository struct {
 	db *gorm.DB
 }
 
-func NewUserRepository(db *gorm.DB) *userRepository {
-	return &userRepository{db}
+func NewUserRepository(db *gorm.DB) *UserRepository {
+	return &UserRepository{db}
 }
 
-func (r *userRepository) GetAdminByID(ctx context.Context, id uint) (entity.Admin, error) {
-	res := entity.Admin{}
-	err := r.db.WithContext(ctx).Table("admins").Where("id = ?", id).Find(&res).Error
+func (r *UserRepository) GetAdminByID(ctx context.Context, id uint) (entity.Admin, error) {
+	var adminResult entity.Admin
+	err := r.db.WithContext(ctx).Table("admins").Where("id = ?", id).Find(&adminResult).Error
 	if err != nil {
 		return entity.Admin{}, err
 	}
 
-	return res, nil
+	return adminResult, nil
 }
 
-func (r *userRepository) GetAdminByEmail(ctx context.Context, email string) (entity.Admin, error) {
-	res := entity.Admin{}
-	err := r.db.WithContext(ctx).Table("admins").Where("email = ?", email).Find(&res).Error
+func (r *UserRepository) GetAdminByEmail(ctx context.Context, email string) (entity.Admin, error) {
+	var adminResult entity.Admin
+	err := r.db.WithContext(ctx).Table("admins").Where("email = ?", email).Find(&adminResult).Error
 	if err != nil {
 		return entity.Admin{}, err
 	}
 
-	return res, nil
+	return adminResult, nil
 }
 
-func (r *userRepository) CreateAdmin(ctx context.Context, user entity.Admin) (entity.Admin, error) {
+func (r *UserRepository) CreateAdmin(ctx context.Context, user entity.Admin) (entity.Admin, error) {
 	err := r.db.WithContext(ctx).Create(&user).Error
 	if err != nil {
 		return entity.Admin{}, err
 	}
+
 	return user, nil
 }
 
-func (r *userRepository) UpdateAdmin(ctx context.Context, user entity.Admin) (entity.Admin, error) {
+func (r *UserRepository) UpdateAdmin(ctx context.Context, user entity.Admin) (entity.Admin, error) {
 	err := r.db.WithContext(ctx).Table("admins").Where("id = ?", user.ID).Updates(&user).Error
 	if err != nil {
 		return entity.Admin{}, err
@@ -52,13 +53,13 @@ func (r *userRepository) UpdateAdmin(ctx context.Context, user entity.Admin) (en
 	return user, nil
 }
 
-func (r *userRepository) DeleteAdmin(ctx context.Context, id uint) error {
+func (r *UserRepository) DeleteAdmin(ctx context.Context, id uint) error {
 	err := r.db.WithContext(ctx).Delete(&entity.Admin{}, id).Error
 	return err
 }
 
-func (r *userRepository) GetCashierByID(ctx context.Context, id uint) (entity.Cashier, error) {
-	res := entity.Cashier{}
+func (r *UserRepository) GetCashierByID(ctx context.Context, id uint) (entity.Cashier, error) {
+	var res entity.Cashier
 	err := r.db.WithContext(ctx).Table("cashiers").Where("id = ?", id).Find(&res).Error
 	if err != nil {
 		return entity.Cashier{}, err
@@ -67,8 +68,8 @@ func (r *userRepository) GetCashierByID(ctx context.Context, id uint) (entity.Ca
 	return res, nil
 }
 
-func (r *userRepository) GetCashierByUsername(ctx context.Context, username string) (entity.Cashier, error) {
-	res := entity.Cashier{}
+func (r *UserRepository) GetCashierByUsername(ctx context.Context, username string) (entity.Cashier, error) {
+	var res entity.Cashier
 	err := r.db.WithContext(ctx).Table("cashiers").Where("username = ?", username).Find(&res).Error
 	if err != nil {
 		return entity.Cashier{}, err
@@ -77,7 +78,7 @@ func (r *userRepository) GetCashierByUsername(ctx context.Context, username stri
 	return res, nil
 }
 
-func (r *userRepository) CreateCashier(ctx context.Context, user entity.Cashier) (entity.Cashier, error) {
+func (r *UserRepository) CreateCashier(ctx context.Context, user entity.Cashier) (entity.Cashier, error) {
 	err := r.db.WithContext(ctx).Create(&user).Error
 	if err != nil {
 		return entity.Cashier{}, err
@@ -85,7 +86,7 @@ func (r *userRepository) CreateCashier(ctx context.Context, user entity.Cashier)
 	return user, nil
 }
 
-func (r *userRepository) UpdateCashier(ctx context.Context, user entity.Cashier) (entity.Cashier, error) {
+func (r *UserRepository) UpdateCashier(ctx context.Context, user entity.Cashier) (entity.Cashier, error) {
 	err := r.db.WithContext(ctx).Table("cashiers").Where("id = ?", user.ID).Updates(&user).Error
 	if err != nil {
 		return entity.Cashier{}, err
@@ -94,7 +95,7 @@ func (r *userRepository) UpdateCashier(ctx context.Context, user entity.Cashier)
 	return user, nil
 }
 
-func (r *userRepository) DeleteCashier(ctx context.Context, id uint) error {
+func (r *UserRepository) DeleteCashier(ctx context.Context, id uint) error {
 	err := r.db.WithContext(ctx).Delete(&entity.Cashier{}, id).Error
 	return err
 }

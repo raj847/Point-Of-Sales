@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"vandesar/handler/api"
@@ -10,51 +11,60 @@ import (
 	"vandesar/service"
 	"vandesar/utils"
 
+	"github.com/rs/cors"
+
 	_ "github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
 type APIHandler struct {
-	UserAPIHandler    *api.UserAPI
-	ProductAPIHandler *api.ProductAPI
+	UserAPIHandler        *api.UserAPI
+	ProductAPIHandler     *api.ProductAPI
+	TransactionAPIHandler *api.TransactionAPI
 }
 
 func main() {
-	os.Setenv("DATABASE_URL", "postgres://root:secret@localhost:5432/pos")
+	err := os.Setenv("DATABASE_URL", "postgres://root:secret@localhost:5432/pos")
+	if err != nil {
+		log.Fatalf("cannot set env: %v", err)
+	}
 
 	mux := http.NewServeMux()
 
-	err := utils.ConnectDB()
+	err = utils.ConnectDB()
 	if err != nil {
-		panic(err)
+		log.Fatalf("cannot connect to database: %v", err)
 	}
 
 	db := utils.GetDBConnection()
 	mux = RunServer(db, mux)
 
+	handler := cors.Default().Handler(mux)
+
 	fmt.Println("Server is running on port 8080")
-	err = http.ListenAndServe(":8080", mux)
+	err = http.ListenAndServe(":8080", handler)
 	if err != nil {
-		panic(err)
+		log.Fatalf("cannot start server: %v", err)
 	}
 }
 
 func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 	userRepo := repository.NewUserRepository(db)
 	productRepo := repository.NewProductRepository(db)
+	transactRepo := repository.NewTransactionRepository(db)
 
 	userService := service.NewUserService(userRepo)
 	productService := service.NewProductService(productRepo)
+	transactService := service.NewTransactionService(transactRepo)
 
 	userAPIHandler := api.NewUserAPI(userService)
-	productAPIHandler := api.NewProductAPI(
-		productService,
-		userRepo,
-	)
+	productAPIHandler := api.NewProductAPI(productService,userService)
+	transactionAPIHandler := api.NewTransactionAPI(transactService)
 
 	apiHandler := APIHandler{
-		UserAPIHandler:    userAPIHandler,
-		ProductAPIHandler: productAPIHandler,
+		UserAPIHandler:        userAPIHandler,
+		ProductAPIHandler:     productAPIHandler,
+		TransactionAPIHandler: transactionAPIHandler,
 	}
 
 	MuxRoute(mux, "POST", "/api/v1/users/admin/register", middleware.Post(http.HandlerFunc(apiHandler.UserAPIHandler.AdminRegister)))
@@ -76,19 +86,75 @@ func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 	MuxRoute(mux, "GET", "/api/v1/products",
 		middleware.Get(
 			middleware.Auth(
-				http.HandlerFunc(apiHandler.ProductAPIHandler.GetAllProducts))))
+				http.HandlerFunc(apiHandler.ProductAPIHandler.GetAllProducts),
+			),
+		),
+		"?product_id=", "&search=",
+	)
 
 	MuxRoute(mux, "PUT", "/api/v1/products/update",
-		middleware.Post(
+		middleware.Put(
 			middleware.Auth(
 				middleware.MustAdmin(
-					http.HandlerFunc(apiHandler.ProductAPIHandler.UpdateProduct)))))
+					http.HandlerFunc(apiHandler.ProductAPIHandler.UpdateProduct)))),
+		"?product_id=",
+	)
 
 	MuxRoute(mux, "DELETE", "/api/v1/products/delete",
-		middleware.Post(
+		middleware.Delete(
 			middleware.Auth(
 				middleware.MustAdmin(
-					http.HandlerFunc(apiHandler.ProductAPIHandler.DeleteProduct)))))
+					http.HandlerFunc(apiHandler.ProductAPIHandler.DeleteProduct)))),
+		"?product_id=",
+	)
+
+	MuxRoute(mux, "POST", "/api/v1/transactions/create",
+		middleware.Post(
+			middleware.Auth(
+				middleware.MustCashier(
+					http.HandlerFunc(apiHandler.TransactionAPIHandler.CreateTransaction)))))
+
+	MuxRoute(mux, "GET", "/api/v1/transactions/admin",
+		middleware.Get(
+			middleware.Auth(
+				middleware.MustCashier(
+					http.HandlerFunc(apiHandler.TransactionAPIHandler.GetAllTransactionsByAdmin),
+				),
+			),
+		),
+	)
+
+	MuxRoute(mux, "GET", "/api/v1/transactions/cashier",
+		middleware.Get(
+			middleware.Auth(
+				middleware.MustCashier(
+					http.HandlerFunc(apiHandler.TransactionAPIHandler.GetAllTransactionsByCashier),
+				),
+			),
+		),
+	)
+
+	MuxRoute(mux, "PUT", "/api/v1/transactions/update",
+		middleware.Put(
+			middleware.Auth(
+				middleware.MustAdmin(
+					http.HandlerFunc(apiHandler.TransactionAPIHandler.UpdateTransaction),
+				),
+			),
+		),
+		"?transaction_id=",
+	)
+
+	MuxRoute(mux, "DELETE", "/api/v1/transactions/delete",
+		middleware.Delete(
+			middleware.Auth(
+				middleware.MustAdmin(
+					http.HandlerFunc(apiHandler.TransactionAPIHandler.DeleteTransaction),
+				),
+			),
+		),
+		"?transaction_id=",
+	)
 
 	return mux
 }
