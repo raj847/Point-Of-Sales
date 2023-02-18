@@ -21,6 +21,7 @@ type APIHandler struct {
 	UserAPIHandler        *api.UserAPI
 	ProductAPIHandler     *api.ProductAPI
 	TransactionAPIHandler *api.TransactionAPI
+	RekapAPIHandler 	 *api.RekapAPI
 }
 
 func main() {
@@ -52,6 +53,7 @@ func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 	userRepo := repository.NewUserRepository(db)
 	productRepo := repository.NewProductRepository(db)
 	transactRepo := repository.NewTransactionRepository(db)
+	rekapRepo := repository.NewRekapRepository(db)
 
 	userService := service.NewUserService(userRepo)
 	productService := service.NewProductService(productRepo)
@@ -61,11 +63,20 @@ func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 	productAPIHandler := api.NewProductAPI(productService,userService)
 	transactionAPIHandler := api.NewTransactionAPI(transactService)
 
+	rekapApiHandler := api.NewRekapAPI(rekapRepo)
+
 	apiHandler := APIHandler{
 		UserAPIHandler:        userAPIHandler,
 		ProductAPIHandler:     productAPIHandler,
 		TransactionAPIHandler: transactionAPIHandler,
+		RekapAPIHandler: rekapApiHandler,
 	}
+
+
+	MuxRoute(mux, "GET", "/api/v1/rekap",
+		middleware.Get(
+			middleware.MustAdmin(
+				http.HandlerFunc(apiHandler.RekapAPIHandler.ListRekap))))
 
 	MuxRoute(mux, "POST", "/api/v1/users/admin/register", middleware.Post(http.HandlerFunc(apiHandler.UserAPIHandler.AdminRegister)))
 	MuxRoute(mux, "POST", "/api/v1/users/admin/login", middleware.Post(http.HandlerFunc(apiHandler.UserAPIHandler.AdminLogin)))

@@ -98,6 +98,12 @@ func MustCashier(next http.Handler) http.Handler {
 		}
 		claims = tkn.Claims.(*entity.Claims)
 
+		if claims.Role != "cashier" {
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(entity.NewErrorResponse("error unauthorized user id"))
+			return
+		}
+
 		ctx := context.WithValue(r.Context(), "id", claims.UserID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
