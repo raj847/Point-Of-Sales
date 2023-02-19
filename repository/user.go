@@ -15,6 +15,16 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{db}
 }
 
+func (r *UserRepository) GetAllAdmins() ([]entity.Admin, error) {
+	var admins []entity.Admin
+	err := r.db.Table("admins").Find(&admins).Error
+	if err != nil {
+		return []entity.Admin{}, err
+	}
+
+	return admins, nil
+}
+
 func (r *UserRepository) GetAdminByID(ctx context.Context, id uint) (entity.Admin, error) {
 	var adminResult entity.Admin
 	err := r.db.WithContext(ctx).Table("admins").Where("id = ?", id).Find(&adminResult).Error

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 	"vandesar/entity"
 
 	"gorm.io/gorm"
@@ -117,6 +118,45 @@ func (c *TransactionRepository) ReadTransByCashier(userId uint) ([]entity.Transa
 	if err != nil {
 		return nil, err
 	}
+
+	resp := make([]entity.TransactionReq, 0, len(transactions))
+
+	for _, v := range transactions {
+		var cartList []entity.Prods
+		_ = json.Unmarshal(v.CartList, &cartList)
+
+		resp = append(resp, entity.TransactionReq{
+			UserID:      v.UserID,
+			Debt:        v.Debt,
+			Status:      v.Status,
+			Money:       v.Money,
+			CartList:    cartList,
+			TotalPrice:  v.TotalPrice,
+			Notes:       v.Notes,
+			TotalProfit: v.TotalProfit,
+		})
+	}
+
+	return resp, nil
+}
+
+func (c *TransactionRepository) ReadTransByDateRange(startDate, endDate time.Time, adminId uint) ([]entity.TransactionReq, error) {
+	var transactions []entity.Transaction
+	err := c.db.Debug().
+		Table("transactions").
+		Select("transactions.*").
+		Where("transactions.created_at BETWEEN ? AND ?", startDate, endDate).
+		Joins("JOIN cashiers ON cashiers.id = transactions.user_id").
+		Where("cashiers.admin_id = ?", adminId).
+		Where("transactions.deleted_at IS NULL").
+		Scan(&transactions).Error
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println("=======")
+	fmt.Println(transactions)
+	fmt.Println("=======")
 
 	resp := make([]entity.TransactionReq, 0, len(transactions))
 

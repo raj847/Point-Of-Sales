@@ -26,6 +26,7 @@ func ConnectDB() error {
 		entity.Cashier{},
 		entity.Product{},
 		entity.Transaction{},
+		entity.Rekap{},
 	)
 
 	SetupDBConnection(conn)
