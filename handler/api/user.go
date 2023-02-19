@@ -76,6 +76,7 @@ func (u *UserAPI) AdminLogin(w http.ResponseWriter, r *http.Request) {
 		"user_id": int(eUser.ID),
 		"role":    "admin",
 		"message": "login success",
+		"tokenCookie": tokenString,
 	}
 
 	WriteJSON(w, http.StatusOK, response)
