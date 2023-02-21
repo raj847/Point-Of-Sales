@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/minio/minio-go/v7"
@@ -21,12 +22,14 @@ func NewMinioClient() (*minio.Client, error) {
 	return minioClient, err
 }
 
-func UploadToCloud(ctx context.Context, minioClient *minio.Client, filePdf *os.File, fileName string) error {
+func UploadToCloud(ctx context.Context, minioClient *minio.Client, filePdf *os.File, fileName string) (string, error) {
 	_, err := minioClient.PutObject(ctx, "rajendra", fileName, filePdf, -1, minio.PutObjectOptions{
 		UserMetadata: map[string]string{
 			"x-amz-acl": "public-read",
 		},
 		ContentType: "application/pdf",
 	})
-	return err
+
+	fileUploadedLink := fmt.Sprintf("https://is3.cloudhost.id/rajendra/%s", fileName)
+	return fileUploadedLink, err
 }

@@ -44,12 +44,18 @@ func main() {
 
 	fmt.Println("Server is running on port 8080")
 	err = http.ListenAndServe(":8080", handler)
+	// http.ListenAndServeTLS()
 	if err != nil {
 		log.Fatalf("cannot start server: %v", err)
 	}
 }
 
 func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
+	minioClientConn, err := service.NewMinioClient()
+	if err != nil {
+		log.Fatalf("cannot connect to minio: %v", err)
+	}
+
 	userRepo := repository.NewUserRepository(db)
 	productRepo := repository.NewProductRepository(db)
 	transactRepo := repository.NewTransactionRepository(db)
@@ -58,6 +64,13 @@ func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 	userService := service.NewUserService(userRepo)
 	productService := service.NewProductService(productRepo)
 	transactService := service.NewTransactionService(transactRepo)
+
+
+	rekapService := service.NewRekapService(rekapRepo, transactRepo, userRepo, minioClientConn)
+
+	// run cron job for generate pdf
+	service.DoRekapEachMonth(rekapService)
+	service.DoRekapEveryDay(rekapService)
 
 	userAPIHandler := api.NewUserAPI(userService)
 	productAPIHandler := api.NewProductAPI(productService,userService)
@@ -71,12 +84,6 @@ func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 		TransactionAPIHandler: transactionAPIHandler,
 		RekapAPIHandler: rekapApiHandler,
 	}
-
-
-	MuxRoute(mux, "GET", "/api/v1/rekap",
-		middleware.Get(
-			middleware.MustAdmin(
-				http.HandlerFunc(apiHandler.RekapAPIHandler.ListRekap))))
 
 	MuxRoute(mux, "POST", "/api/v1/users/admin/register", middleware.Post(http.HandlerFunc(apiHandler.UserAPIHandler.AdminRegister)))
 	MuxRoute(mux, "POST", "/api/v1/users/admin/login", middleware.Post(http.HandlerFunc(apiHandler.UserAPIHandler.AdminLogin)))
@@ -166,6 +173,20 @@ func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 		),
 		"?transaction_id=",
 	)
+
+	// rekap
+
+	MuxRoute(mux, "GET", "/api/v1/rekap/months",
+	middleware.Get(
+		middleware.Auth(
+			middleware.MustAdmin(
+				http.HandlerFunc(apiHandler.RekapAPIHandler.ListRekapPerMonth)))))
+
+	MuxRoute(mux, "GET", "/api/v1/rekap/days",
+	middleware.Get(
+		middleware.Auth(
+			middleware.MustAdmin(
+				http.HandlerFunc(apiHandler.RekapAPIHandler.ListRekapPerDays)))))
 
 	return mux
 }

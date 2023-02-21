@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/Rhymond/go-money v1.0.9
 	github.com/go-co-op/gocron v1.18.0
+	github.com/google/uuid v1.3.0
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/lib/pq v1.10.7
 	github.com/minio/minio-go/v7 v7.0.48
@@ -15,7 +16,6 @@ require (
 
 require (
 	github.com/dustin/go-humanize v1.0.0 // indirect
-	github.com/google/uuid v1.3.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/klauspost/cpuid/v2 v2.1.0 // indirect
