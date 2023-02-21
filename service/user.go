@@ -44,6 +44,27 @@ func (s *UserService) LoginAdmin(ctx context.Context, adminReq entity.AdminLogin
 	return existingAdmin, nil
 }
 
+func (s *UserService) ChangeAdminPassword(ctx context.Context, changePassReq entity.AdminChangePassword) (id entity.Admin, err error) {
+	existingAdmin, err := s.userRepository.GetAdminByID(ctx, changePassReq.AdminID)
+	if err != nil {
+		return entity.Admin{}, ErrUserNotFound
+	}
+
+	if utils.CheckPassword(changePassReq.OldPassword, existingAdmin.Password) != nil {
+		return entity.Admin{}, ErrUserPasswordDontMatch
+	}
+
+	hashedPassword, _ := utils.HashPassword(changePassReq.NewPassword)
+
+	err = s.userRepository.ChangeAdminPassword(ctx, existingAdmin.ID, hashedPassword)
+	if err != nil {
+		return  entity.Admin{}, err
+	}
+
+	existingAdmin.Password = hashedPassword
+	return existingAdmin, nil
+}
+
 func (s *UserService) LoginCashier(ctx context.Context, cashierReq entity.CashierLogin) (id entity.Cashier, err error) {
 	existingCashier, err := s.userRepository.GetCashierByUsername(ctx, cashierReq.Username)
 	if err != nil {

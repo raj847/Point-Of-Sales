@@ -82,6 +82,77 @@ func (u *UserAPI) AdminLogin(w http.ResponseWriter, r *http.Request) {
 	WriteJSON(w, http.StatusOK, response)
 }
 
+func (u *UserAPI) ChangeAdminPassword(w http.ResponseWriter, r *http.Request) {
+	var changeAdminPassReq entity.AdminChangePassword
+
+	err := json.NewDecoder(r.Body).Decode(&changeAdminPassReq)
+	if err != nil {
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("invalid decode json"))
+		return
+	}
+
+	if changeAdminPassReq.OldPassword == ""  || changeAdminPassReq.NewPassword == "" {
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("email or password is empty"))
+		return
+	}
+
+	adminIdUint := r.Context().Value("id").(uint)
+	if err != nil {
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("invalid user id"))
+		return
+	}
+
+	changeAdminPassReq.AdminID = adminIdUint
+
+	eUser, err := u.userService.ChangeAdminPassword(r.Context(), changeAdminPassReq)
+	if err != nil {
+		if errors.Is(err, service.ErrUserNotFound) {
+			WriteJSON(w, http.StatusNotFound, entity.NewErrorResponse(err.Error()))
+			return
+		} else if errors.Is(err, service.ErrUserNotFound) {
+			WriteJSON(w, http.StatusNotFound, entity.NewErrorResponse(err.Error()))
+			return
+		} else if errors.Is(err, service.ErrUserPasswordDontMatch) {
+			WriteJSON(w, http.StatusNotFound, entity.NewErrorResponse(err.Error()))
+			return
+		}
+
+		WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
+		return
+	}
+
+	expirationTime := time.Now().Add(5 * time.Hour)
+
+	claims := entity.Claims{
+		UserID:  eUser.ID,
+		AdminID: eUser.ID,
+		Role:    "admin",
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: expirationTime.Unix(),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &claims)
+	tokenString, _ := token.SignedString([]byte("rahasia-perusahaan"))
+
+	expiresAt := time.Now().Add(5 * time.Hour)
+	http.SetCookie(w, &http.Cookie{
+		Name:    "user_id",
+		Path:    "/",
+		Value:   tokenString,
+		Expires: expiresAt,
+	})
+
+	response := map[string]any{
+		"user_id": int(eUser.ID),
+		"role":    "admin",
+		"message": "login success",
+		"tokenCookie": tokenString,
+	}
+
+	WriteJSON(w, http.StatusOK, response)
+}
+
 func (u *UserAPI) AdminRegister(w http.ResponseWriter, r *http.Request) {
 	var user entity.AdminRegister
 

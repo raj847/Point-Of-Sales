@@ -35,6 +35,11 @@ func (r *UserRepository) GetAdminByID(ctx context.Context, id uint) (entity.Admi
 	return adminResult, nil
 }
 
+func (r *UserRepository) ChangeAdminPassword(ctx context.Context, id uint, password string) error {
+	err := r.db.WithContext(ctx).Table("admins").Where("id = ?", id).Update("password", password).Error
+	return err
+}
+
 func (r *UserRepository) GetAdminByEmail(ctx context.Context, email string) (entity.Admin, error) {
 	var adminResult entity.Admin
 	err := r.db.WithContext(ctx).Table("admins").Where("email = ?", email).Find(&adminResult).Error
