@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -16,5 +17,16 @@ func HashPassword(password string) (string, error) {
 
 // CheckPassword checks if the provided password is correct or not
 func CheckPassword(password string, hashedPassword string) error {
+	// dari database, password input
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }
+
+/*
+	change password:
+
+	- input password lama
+	- input password baru
+	- validasi password lama == password di database
+	- kalo sam, update password baru
+	- logout, frontend
+*/

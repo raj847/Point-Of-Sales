@@ -24,6 +24,12 @@ type AdminLogin struct {
 	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
+type AdminChangePassword struct {
+	AdminID uint `json:"-"`
+	OldPassword string `json:"old_password" binding:"required"`
+	NewPassword string `json:"new_password" binding:"required"`
+}
+
 
 type AdminRegister struct {
 	ShopName string `json:"shop_name" binding:"required"`
