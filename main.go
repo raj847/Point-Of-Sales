@@ -193,6 +193,9 @@ func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 			middleware.MustAdmin(
 				http.HandlerFunc(apiHandler.RekapAPIHandler.ListRekapPerDays)))))
 
+	MuxRoute(mux, "POST", "/api/v1/users/admin/check", middleware.Post(middleware.Auth(middleware.MustAdmin(http.HandlerFunc(apiHandler.UserAPIHandler.CheckTokenAdmin)))))
+
+	MuxRoute(mux, "POST", "/api/v1/users/cashier/check", middleware.Post(middleware.Auth(middleware.MustCashier(http.HandlerFunc(apiHandler.UserAPIHandler.CheckTokenCashier)))))
 	return mux
 }
 

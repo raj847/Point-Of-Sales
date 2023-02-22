@@ -187,3 +187,11 @@ func validatePassword(password string) bool {
 
 	return  moreThan && lower && upper && symbol
 }
+
+func (s *UserService) CheckTokenAdmin(ctx context.Context,token entity.CheckTokenAdmin) (entity.CheckTokenAdmin, error) {
+	return s.CheckTokenAdmin(ctx,token)
+}
+
+func (s *UserService) CheckTokenCashier(ctx context.Context,token entity.CheckTokenCashier) (entity.CheckTokenCashier, error) {
+	return s.CheckTokenCashier(ctx,token)
+}

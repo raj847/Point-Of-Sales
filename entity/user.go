@@ -52,3 +52,15 @@ type CashierRegister struct {
 	Password string `json:"password" binding:"required"`
 	Role     string `json:"-"`
 }
+
+type CheckTokenAdmin struct {
+	TokenInput string `json:"token_input"`
+	AdminID    uint   `json:"admin_id"`
+}
+
+type CheckTokenCashier struct {
+	TokenInput string `json:"token_input"`
+	CashierId    uint   `json:"cashier_id"`
+}
+
+

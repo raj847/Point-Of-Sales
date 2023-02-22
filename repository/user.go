@@ -114,3 +114,21 @@ func (r *UserRepository) DeleteCashier(ctx context.Context, id uint) error {
 	err := r.db.WithContext(ctx).Delete(&entity.Cashier{}, id).Error
 	return err
 }
+
+func (r *UserRepository) CheckTokenAdmin(token entity.CheckTokenAdmin) (error) {
+	err := r.db.Create(&token).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *UserRepository) CheckTokenCashier(token entity.CheckTokenCashier) (error) {
+	err := r.db.Create(&token).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

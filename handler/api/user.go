@@ -341,3 +341,83 @@ func (u *UserAPI) Logout(w http.ResponseWriter, r *http.Request) {
 		Expires: time.Now(),
 	})
 }
+
+func (u *UserAPI) CheckTokenAdmin(w http.ResponseWriter, r *http.Request) {
+	var token entity.CheckTokenAdmin
+
+	err := json.NewDecoder(r.Body).Decode(&token)
+	if err != nil {
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("invalid decode json"))
+		return
+	}
+
+	if token.TokenInput == "" {
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("token nya cok"))
+		return
+	}
+
+	c,_ := r.Cookie("user_id")
+	if token.TokenInput != c.Value {
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("token nya bedaa"))
+        return
+	}
+	
+
+	adminIdUint := r.Context().Value("id").(uint)
+	token.AdminID = uint(adminIdUint)
+
+	eUser, err := u.userService.CheckTokenAdmin(r.Context(), token)
+	if err != nil {
+		WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
+		return
+	}
+
+	response := map[string]any{
+		"user_id": eUser.AdminID,
+		"message": "token benar",
+	}
+
+	WriteJSON(w, http.StatusCreated, response)
+
+
+}
+
+func (u *UserAPI) CheckTokenCashier(w http.ResponseWriter, r *http.Request) {
+	var token entity.CheckTokenCashier
+
+	err := json.NewDecoder(r.Body).Decode(&token)
+	if err != nil {
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("invalid decode json"))
+		return
+	}
+
+	if token.TokenInput == "" {
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("token nya cok"))
+		return
+	}
+
+	c,_ := r.Cookie("user_id")
+	if token.TokenInput != c.Value {
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("token nya bedaa"))
+        return
+	}
+	
+
+	cashierIdUint := r.Context().Value("id").(uint)
+	token.CashierId = uint(cashierIdUint)
+
+	eUser, err := u.userService.CheckTokenCashier(r.Context(), token)
+	if err != nil {
+		WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
+		return
+	}
+
+	response := map[string]any{
+		"user_id": eUser.CashierId,
+		"message": "token benar",
+	}
+
+	WriteJSON(w, http.StatusCreated, response)
+
+
+}
