@@ -27,6 +27,14 @@ func Post(next http.Handler) http.Handler {
 			return
 		}
 
+		// boleh masuk request body
+		// w.Header().Set("Accept", "application/form-data")
+
+		// boleh masuk request body
+		// w.Header().Set("Accept", "application/json")
+
+
+		// return
 		w.Header().Set("Content-Type", "application/json")
 		next.ServeHTTP(w, r)
 	})

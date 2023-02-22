@@ -3,20 +3,30 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"log"
 	"net/http"
 	"time"
 	"vandesar/entity"
 	"vandesar/service"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/minio/minio-go/v7"
 )
 
 type UserAPI struct {
 	userService *service.UserService
+	minioClient *minio.Client
 }
 
-func NewUserAPI(userService *service.UserService) *UserAPI {
-	return &UserAPI{userService: userService}
+func NewUserAPI(
+	userService *service.UserService,
+	minioClient *minio.Client,
+	) *UserAPI {
+	return &UserAPI{
+		userService: userService,
+		minioClient: minioClient,
+	}
 }
 
 func (u *UserAPI) AdminLogin(w http.ResponseWriter, r *http.Request) {
@@ -154,12 +164,42 @@ func (u *UserAPI) ChangeAdminPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UserAPI) AdminRegister(w http.ResponseWriter, r *http.Request) {
-	var user entity.AdminRegister
+	r.ParseForm()
 
-	err := json.NewDecoder(r.Body).Decode(&user)
+	// get form file from request
+	file, header, err := r.FormFile("file")
 	if err != nil {
-		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("invalid decode json"))
+		fmt.Println(file)
+		fmt.Println(err.Error())
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("invalid file"))
 		return
+	}
+
+	_, err = u.minioClient.PutObject(r.Context(), "rajendra", header.Filename, file, header.Size, minio.PutObjectOptions{
+		UserMetadata: map[string]string{
+			"x-amz-acl": "public-read",
+		},
+		ContentType: "image/jpeg",
+	})
+	if err != nil {
+		log.Println(err)
+	}
+
+	fileName := fmt.Sprintf("https://is3.cloudhost.id/rajendra/%s", header.Filename)
+
+	// get form value from request
+
+	email := r.FormValue("email")
+	password := r.FormValue("password")
+	role := "admin"
+	shopName := r.FormValue("shop_name")
+
+	user := entity.AdminRegister{
+		Email: email,
+		Password: password,
+		Role: role,
+		ShopName: shopName,
+		PhotoURL: fileName,
 	}
 
 	if user.Email == "" || user.ShopName == "" || user.Password == "" {
