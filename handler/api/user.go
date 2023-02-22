@@ -381,7 +381,7 @@ func (u *UserAPI) CheckTokenAdmin(w http.ResponseWriter, r *http.Request) {
 		"message": "token benar",
 	}
 
-	WriteJSON(w, http.StatusCreated, response)
+	WriteJSON(w, http.StatusOK, response)
 
 
 }
@@ -422,7 +422,7 @@ func (u *UserAPI) CheckTokenCashier(w http.ResponseWriter, r *http.Request) {
 		"message": "token benar",
 	}
 
-	WriteJSON(w, http.StatusCreated, response)
+	WriteJSON(w, http.StatusOK, response)
 
 
 }
