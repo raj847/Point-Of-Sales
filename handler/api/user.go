@@ -85,6 +85,7 @@ func (u *UserAPI) AdminLogin(w http.ResponseWriter, r *http.Request) {
 	response := map[string]any{
 		"user_id": int(eUser.ID),
 		"role":    "admin",
+		"nama": eUser.ShopName,
 		"message": "login success",
 		"tokenCookie": tokenString,
 	}
