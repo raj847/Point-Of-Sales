@@ -109,6 +109,7 @@ func (s *UserService) RegisterAdmin(ctx context.Context, adminReq entity.AdminRe
 		Email:    adminReq.Email,
 		Role:     "admin",
 		Password: adminReq.Password,
+		PhotoURL: adminReq.PhotoURL,
 	}
 
 	hashedPassword, err := utils.HashPassword(admin.Password)

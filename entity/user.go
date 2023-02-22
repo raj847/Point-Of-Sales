@@ -10,6 +10,7 @@ type Admin struct {
 	Email    string `json:"email" gorm:"type:varchar(255);not null" validate:"required,email"`
 	Password string `json:"-" gorm:"type:varchar(255);not null"`
 	Role     string `json:"role" gorm:"type:varchar(50);not null" validate:"required"`
+	PhotoURL string `json:"photo_url" gorm:"type:varchar(255)"`
 }
 
 type Cashier struct {
@@ -30,13 +31,13 @@ type AdminChangePassword struct {
 	NewPassword string `json:"new_password" binding:"required"`
 }
 
-
 type AdminRegister struct {
 	ShopName string `json:"shop_name" binding:"required"`
 
 	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
 	Role     string `json:"-"`
+	PhotoURL string `json:"photo_url"`
 }
 
 type CashierLogin struct {

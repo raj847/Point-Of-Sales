@@ -72,7 +72,7 @@ func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 	service.DoRekapEachMonth(rekapService)
 	service.DoRekapEveryDay(rekapService)
 
-	userAPIHandler := api.NewUserAPI(userService)
+	userAPIHandler := api.NewUserAPI(userService, minioClientConn)
 	productAPIHandler := api.NewProductAPI(productService,userService)
 	transactionAPIHandler := api.NewTransactionAPI(transactService)
 
