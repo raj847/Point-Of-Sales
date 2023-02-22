@@ -115,20 +115,20 @@ func (r *UserRepository) DeleteCashier(ctx context.Context, id uint) error {
 	return err
 }
 
-func (r *UserRepository) CheckTokenAdmin(token entity.CheckTokenAdmin) (error) {
-	err := r.db.Create(&token).Error
-	if err != nil {
-		return err
-	}
+// func (r *UserRepository) CheckTokenAdmin(token entity.CheckTokenAdmin) (error) {
+// 	err := r.db.Create(&token).Error
+// 	if err != nil {
+// 		return err
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
-func (r *UserRepository) CheckTokenCashier(token entity.CheckTokenCashier) (error) {
-	err := r.db.Create(&token).Error
-	if err != nil {
-		return err
-	}
+// func (r *UserRepository) CheckTokenCashier(token entity.CheckTokenCashier) (error) {
+// 	err := r.db.Create(&token).Error
+// 	if err != nil {
+// 		return err
+// 	}
 
-	return nil
-}
+// 	return nil
+// }

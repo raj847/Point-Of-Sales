@@ -284,6 +284,7 @@ func (u *UserAPI) CashierLogin(w http.ResponseWriter, r *http.Request) {
 	response := map[string]any{
 		"user_id": int(eUser.ID),
 		"role":    "cashier",
+		"nama": eUser.Username,
 		"message": "login success",
 	}
 
@@ -361,19 +362,22 @@ func (u *UserAPI) CheckTokenAdmin(w http.ResponseWriter, r *http.Request) {
 		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("token nya bedaa"))
         return
 	}
+
+	fmt.Println("token input :",token.TokenInput,"dan token cookie :",c.Value)
 	
 
 	adminIdUint := r.Context().Value("id").(uint)
 	token.AdminID = uint(adminIdUint)
 
-	eUser, err := u.userService.CheckTokenAdmin(r.Context(), token)
+	eUser, err := u.userService.CheckTokenAdmin(r.Context(), token.AdminID, token)
 	if err != nil {
 		WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
 		return
 	}
 
 	response := map[string]any{
-		"user_id": eUser.AdminID,
+		"user_id": int(eUser.ID),
+		"role": "admin",
 		"message": "token benar",
 	}
 
@@ -406,14 +410,15 @@ func (u *UserAPI) CheckTokenCashier(w http.ResponseWriter, r *http.Request) {
 	cashierIdUint := r.Context().Value("id").(uint)
 	token.CashierId = uint(cashierIdUint)
 
-	eUser, err := u.userService.CheckTokenCashier(r.Context(), token)
+	eUser, err := u.userService.CheckTokenCashier(r.Context(), token.CashierId, token)
 	if err != nil {
 		WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
 		return
 	}
 
 	response := map[string]any{
-		"user_id": eUser.CashierId,
+		"user_id": int(eUser.ID),
+		"name": eUser.Username,
 		"message": "token benar",
 	}
 

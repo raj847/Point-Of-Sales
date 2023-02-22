@@ -188,10 +188,18 @@ func validatePassword(password string) bool {
 	return  moreThan && lower && upper && symbol
 }
 
-func (s *UserService) CheckTokenAdmin(ctx context.Context,token entity.CheckTokenAdmin) (entity.CheckTokenAdmin, error) {
-	return s.CheckTokenAdmin(ctx,token)
+func (s *UserService) CheckTokenAdmin(ctx context.Context,id uint,token entity.CheckTokenAdmin) (entity.Admin, error) {
+	existingAdmin, err := s.userRepository.GetAdminByID(ctx, token.AdminID)
+	if err != nil {
+		return entity.Admin{}, ErrUserNotFound
+	}
+return existingAdmin,nil
 }
 
-func (s *UserService) CheckTokenCashier(ctx context.Context,token entity.CheckTokenCashier) (entity.CheckTokenCashier, error) {
-	return s.CheckTokenCashier(ctx,token)
+func (s *UserService) CheckTokenCashier(ctx context.Context,id uint,token entity.CheckTokenCashier) (entity.Cashier, error) {
+	existingCashier, err := s.userRepository.GetCashierByID(ctx, token.CashierId)
+	if err != nil {
+		return entity.Cashier{}, ErrUserNotFound
+	}
+return existingCashier,nil
 }
