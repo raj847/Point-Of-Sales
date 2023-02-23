@@ -285,8 +285,7 @@ func (u *UserAPI) CashierLogin(w http.ResponseWriter, r *http.Request) {
 	response := map[string]any{
 		"user_id": int(eUser.ID),
 		"role":    "cashier",
-		"nama": eUser.Username,
-		"message": "login success",
+		"nama": eUser.Username,user_id
 	}
 
 	WriteJSON(w, http.StatusOK, response)
@@ -365,7 +364,7 @@ func (u *UserAPI) CheckTokenAdmin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println("token input :",token.TokenInput,"dan token cookie :",c.Value)
-	
+
 
 	adminIdUint := r.Context().Value("id").(uint)
 	token.AdminID = uint(adminIdUint)
@@ -406,7 +405,7 @@ func (u *UserAPI) CheckTokenCashier(w http.ResponseWriter, r *http.Request) {
 		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("token nya bedaa"))
         return
 	}
-	
+
 
 	cashierIdUint := r.Context().Value("id").(uint)
 	token.CashierId = uint(cashierIdUint)
