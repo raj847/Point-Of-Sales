@@ -76,7 +76,6 @@ func MustCashier(next http.Handler) http.Handler {
 		}
 
 		token := fields[1]
-		fmt.Println(token)
 		claims := &entity.Claims{}
 
 		tkn, err := jwt.ParseWithClaims(token, claims, func(t *jwt.Token) (interface{}, error) {

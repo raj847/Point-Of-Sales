@@ -283,10 +283,10 @@ func (u *UserAPI) CashierLogin(w http.ResponseWriter, r *http.Request) {
 	})
 
 	response := map[string]any{
-		"user_id":  int(eUser.ID),
-		"role":     "cashier",
-		"nama":     eUser.Username,
-		"tokentod": tokenString,
+		"user_id":     int(eUser.ID),
+		"role":        "cashier",
+		"nama":        eUser.Username,
+		"tokenCookie": tokenString,
 	}
 
 	WriteJSON(w, http.StatusOK, response)
@@ -371,9 +371,11 @@ func (u *UserAPI) CheckToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dontil := r.Context().Value("id").(entity.Claims)
+	dontil := r.Context().Value("id").(*entity.Claims)
+	token.UserId = dontil.UserID
+	fmt.Println(token.UserId)
 	if dontil.Role == "admin" {
-		eUser, err := u.userService.CheckTokenAdmin(r.Context(), dontil.UserID, token)
+		eUser, err := u.userService.CheckTokenAdmin(r.Context(), token.UserId, token)
 		if err != nil {
 			WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
 			return
@@ -388,7 +390,7 @@ func (u *UserAPI) CheckToken(w http.ResponseWriter, r *http.Request) {
 
 		WriteJSON(w, http.StatusOK, response)
 	} else if dontil.Role == "cashier" {
-		eUser, err := u.userService.CheckTokenCashier(r.Context(), dontil.UserID, token)
+		eUser, err := u.userService.CheckTokenCashier(r.Context(), token.UserId, token)
 		if err != nil {
 			WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
 			return
