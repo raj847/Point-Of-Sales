@@ -202,7 +202,7 @@ func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 
 	// MuxRoute(mux, "POST", "/api/v1/users/cashier/check", middleware.Post(middleware.Auth(middleware.MustCashier(http.HandlerFunc(apiHandler.UserAPIHandler.CheckTokenCashier)))))
 
-	MuxRoute(mux, "POST", "/api/v1/users/checker", middleware.Post(middleware.Auth(middleware.MustCashier(http.HandlerFunc(apiHandler.UserAPIHandler.CheckToken)))))
+	MuxRoute(mux, "POST", "/api/v1/users/checker", middleware.Post(middleware.Checker(http.HandlerFunc(apiHandler.UserAPIHandler.CheckToken))))
 	return mux
 }
 

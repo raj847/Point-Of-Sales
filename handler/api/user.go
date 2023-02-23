@@ -365,6 +365,11 @@ func (u *UserAPI) CheckToken(w http.ResponseWriter, r *http.Request) {
 	// }
 
 	// fmt.Println("token input :", token.TokenInput, "dan token cookie :", c.Value)
+	tokentod := r.Context().Value("xx").(string)
+	if token.TokenInput != tokentod {
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("token nya bedaa"))
+		return
+	}
 
 	dontil := r.Context().Value("id").(entity.Claims)
 	if dontil.Role == "admin" {

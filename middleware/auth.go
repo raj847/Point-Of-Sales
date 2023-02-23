@@ -196,6 +196,7 @@ func Checker(next http.Handler) http.Handler {
 
 		claims = tkn.Claims.(*entity.Claims)
 		ctx := context.WithValue(r.Context(), "id", claims)
+		ctx = context.WithValue(r.Context(), "xx", token)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
