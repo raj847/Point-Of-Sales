@@ -26,7 +26,7 @@ type AdminLogin struct {
 	Password string `json:"password" binding:"required"`
 }
 type AdminChangePassword struct {
-	AdminID uint `json:"-"`
+	AdminID     uint   `json:"-"`
 	OldPassword string `json:"old_password" binding:"required"`
 	NewPassword string `json:"new_password" binding:"required"`
 }
@@ -53,14 +53,17 @@ type CashierRegister struct {
 	Role     string `json:"-"`
 }
 
-type CheckTokenAdmin struct {
+// type CheckTokenAdmin struct {
+// 	TokenInput string `json:"token_input"`
+// 	AdminID    uint   `json:"admin_id"`
+// }
+
+// type CheckTokenCashier struct {
+// 	TokenInput string `json:"token_input"`
+// 	CashierId    uint   `json:"cashier_id"`
+// }
+
+type CheckToken struct {
 	TokenInput string `json:"token_input"`
-	AdminID    uint   `json:"admin_id"`
+	UserId     uint   `json:"user_id"`
 }
-
-type CheckTokenCashier struct {
-	TokenInput string `json:"token_input"`
-	CashierId    uint   `json:"cashier_id"`
-}
-
-

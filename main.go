@@ -21,7 +21,7 @@ type APIHandler struct {
 	UserAPIHandler        *api.UserAPI
 	ProductAPIHandler     *api.ProductAPI
 	TransactionAPIHandler *api.TransactionAPI
-	RekapAPIHandler 	 *api.RekapAPI
+	RekapAPIHandler       *api.RekapAPI
 }
 
 func main() {
@@ -41,11 +41,11 @@ func main() {
 	mux = RunServer(db, mux)
 
 	c := cors.New(cors.Options{
-        AllowedOrigins: []string{"*"},
-        AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders: []string{"*"},
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
-    })
+	})
 
 	handler := c.Handler(mux)
 
@@ -71,7 +71,6 @@ func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 	productService := service.NewProductService(productRepo)
 	transactService := service.NewTransactionService(transactRepo)
 
-
 	rekapService := service.NewRekapService(rekapRepo, transactRepo, userRepo, minioClientConn)
 
 	// run cron job for generate pdf
@@ -79,7 +78,7 @@ func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 	service.DoRekapEveryDay(rekapService)
 
 	userAPIHandler := api.NewUserAPI(userService, minioClientConn)
-	productAPIHandler := api.NewProductAPI(productService,userService)
+	productAPIHandler := api.NewProductAPI(productService, userService)
 	transactionAPIHandler := api.NewTransactionAPI(transactService)
 
 	rekapApiHandler := api.NewRekapAPI(rekapRepo)
@@ -88,7 +87,7 @@ func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 		UserAPIHandler:        userAPIHandler,
 		ProductAPIHandler:     productAPIHandler,
 		TransactionAPIHandler: transactionAPIHandler,
-		RekapAPIHandler: rekapApiHandler,
+		RekapAPIHandler:       rekapApiHandler,
 	}
 
 	MuxRoute(mux, "POST", "/api/v1/users/admin/register", middleware.Post(http.HandlerFunc(apiHandler.UserAPIHandler.AdminRegister)))
@@ -188,20 +187,22 @@ func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 	// rekap
 
 	MuxRoute(mux, "GET", "/api/v1/rekap/months",
-	middleware.Get(
-		middleware.Auth(
-			middleware.MustAdmin(
-				http.HandlerFunc(apiHandler.RekapAPIHandler.ListRekapPerMonth)))))
+		middleware.Get(
+			middleware.Auth(
+				middleware.MustAdmin(
+					http.HandlerFunc(apiHandler.RekapAPIHandler.ListRekapPerMonth)))))
 
 	MuxRoute(mux, "GET", "/api/v1/rekap/days",
-	middleware.Get(
-		middleware.Auth(
-			middleware.MustAdmin(
-				http.HandlerFunc(apiHandler.RekapAPIHandler.ListRekapPerDays)))))
+		middleware.Get(
+			middleware.Auth(
+				middleware.MustAdmin(
+					http.HandlerFunc(apiHandler.RekapAPIHandler.ListRekapPerDays)))))
 
-	MuxRoute(mux, "POST", "/api/v1/users/admin/check", middleware.Post(middleware.Auth(middleware.MustAdmin(http.HandlerFunc(apiHandler.UserAPIHandler.CheckTokenAdmin)))))
+	// MuxRoute(mux, "POST", "/api/v1/users/admin/check", middleware.Post(middleware.Auth(middleware.MustAdmin(http.HandlerFunc(apiHandler.UserAPIHandler.CheckTokenAdmin)))))
 
-	MuxRoute(mux, "POST", "/api/v1/users/cashier/check", middleware.Post(middleware.Auth(middleware.MustCashier(http.HandlerFunc(apiHandler.UserAPIHandler.CheckTokenCashier)))))
+	// MuxRoute(mux, "POST", "/api/v1/users/cashier/check", middleware.Post(middleware.Auth(middleware.MustCashier(http.HandlerFunc(apiHandler.UserAPIHandler.CheckTokenCashier)))))
+
+	MuxRoute(mux, "POST", "/api/v1/users/checker", middleware.Post(middleware.Auth(middleware.MustCashier(http.HandlerFunc(apiHandler.UserAPIHandler.CheckToken)))))
 	return mux
 }
 

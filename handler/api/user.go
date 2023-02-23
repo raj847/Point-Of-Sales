@@ -22,7 +22,7 @@ type UserAPI struct {
 func NewUserAPI(
 	userService *service.UserService,
 	minioClient *minio.Client,
-	) *UserAPI {
+) *UserAPI {
 	return &UserAPI{
 		userService: userService,
 		minioClient: minioClient,
@@ -83,10 +83,10 @@ func (u *UserAPI) AdminLogin(w http.ResponseWriter, r *http.Request) {
 	})
 
 	response := map[string]any{
-		"user_id": int(eUser.ID),
-		"role":    "admin",
-		"nama": eUser.ShopName,
-		"message": "login success",
+		"user_id":     int(eUser.ID),
+		"role":        "admin",
+		"nama":        eUser.ShopName,
+		"message":     "login success",
 		"tokenCookie": tokenString,
 	}
 
@@ -102,7 +102,7 @@ func (u *UserAPI) ChangeAdminPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if changeAdminPassReq.OldPassword == ""  || changeAdminPassReq.NewPassword == "" {
+	if changeAdminPassReq.OldPassword == "" || changeAdminPassReq.NewPassword == "" {
 		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("email or password is empty"))
 		return
 	}
@@ -155,9 +155,9 @@ func (u *UserAPI) ChangeAdminPassword(w http.ResponseWriter, r *http.Request) {
 	})
 
 	response := map[string]any{
-		"user_id": int(eUser.ID),
-		"role":    "admin",
-		"message": "login success",
+		"user_id":     int(eUser.ID),
+		"role":        "admin",
+		"message":     "login success",
 		"tokenCookie": tokenString,
 	}
 
@@ -196,9 +196,9 @@ func (u *UserAPI) AdminRegister(w http.ResponseWriter, r *http.Request) {
 	shopName := r.FormValue("shop_name")
 
 	user := entity.AdminRegister{
-		Email: email,
+		Email:    email,
 		Password: password,
-		Role: role,
+		Role:     role,
 		ShopName: shopName,
 		PhotoURL: fileName,
 	}
@@ -283,9 +283,10 @@ func (u *UserAPI) CashierLogin(w http.ResponseWriter, r *http.Request) {
 	})
 
 	response := map[string]any{
-		"user_id": int(eUser.ID),
-		"role":    "cashier",
-		"nama": eUser.Username,user_id
+		"user_id":  int(eUser.ID),
+		"role":     "cashier",
+		"nama":     eUser.Username,
+		"tokentod": tokenString,
 	}
 
 	WriteJSON(w, http.StatusOK, response)
@@ -327,7 +328,7 @@ func (u *UserAPI) CashierRegister(w http.ResponseWriter, r *http.Request) {
 
 	response := map[string]any{
 		"user_id": eUser.ID,
-		"role":   "cashier",
+		"role":    "cashier",
 		"message": "register success",
 	}
 
@@ -343,8 +344,8 @@ func (u *UserAPI) Logout(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (u *UserAPI) CheckTokenAdmin(w http.ResponseWriter, r *http.Request) {
-	var token entity.CheckTokenAdmin
+func (u *UserAPI) CheckToken(w http.ResponseWriter, r *http.Request) {
+	var token entity.CheckToken
 
 	err := json.NewDecoder(r.Body).Decode(&token)
 	if err != nil {
@@ -357,72 +358,51 @@ func (u *UserAPI) CheckTokenAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c,_ := r.Cookie("user_id")
-	if token.TokenInput != c.Value {
-		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("token nya bedaa"))
-        return
+	// c, _ := r.Cookie("user_id")
+	// if token.TokenInput != c.Value {
+	// 	WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("token nya bedaa"))
+	// 	return
+	// }
+
+	// fmt.Println("token input :", token.TokenInput, "dan token cookie :", c.Value)
+
+	dontil := r.Context().Value("id").(entity.Claims)
+	if dontil.Role == "admin" {
+		eUser, err := u.userService.CheckTokenAdmin(r.Context(), dontil.UserID, token)
+		if err != nil {
+			WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
+			return
+		}
+
+		response := map[string]any{
+			"user_id": int(eUser.ID),
+			"role":    "admin",
+			"name":    eUser.ShopName,
+			"message": "token benar",
+		}
+
+		WriteJSON(w, http.StatusOK, response)
+	} else if dontil.Role == "cashier" {
+		eUser, err := u.userService.CheckTokenCashier(r.Context(), dontil.UserID, token)
+		if err != nil {
+			WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
+			return
+		}
+
+		response := map[string]any{
+			"user_id": int(eUser.ID),
+			"role":    "cashier",
+			"name":    eUser.Username,
+			"message": "token benar",
+		}
+
+		WriteJSON(w, http.StatusOK, response)
+	} else {
+		response := map[string]any{
+			"message": "apakah kamu hekel",
+		}
+
+		WriteJSON(w, http.StatusBadRequest, response)
 	}
-
-	fmt.Println("token input :",token.TokenInput,"dan token cookie :",c.Value)
-
-
-	adminIdUint := r.Context().Value("id").(uint)
-	token.AdminID = uint(adminIdUint)
-
-	eUser, err := u.userService.CheckTokenAdmin(r.Context(), token.AdminID, token)
-	if err != nil {
-		WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
-		return
-	}
-
-	response := map[string]any{
-		"user_id": int(eUser.ID),
-		"role": "admin",
-		"message": "token benar",
-	}
-
-	WriteJSON(w, http.StatusOK, response)
-
-
-}
-
-func (u *UserAPI) CheckTokenCashier(w http.ResponseWriter, r *http.Request) {
-	var token entity.CheckTokenCashier
-
-	err := json.NewDecoder(r.Body).Decode(&token)
-	if err != nil {
-		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("invalid decode json"))
-		return
-	}
-
-	if token.TokenInput == "" {
-		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("token nya cok"))
-		return
-	}
-
-	c,_ := r.Cookie("user_id")
-	if token.TokenInput != c.Value {
-		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("token nya bedaa"))
-        return
-	}
-
-
-	cashierIdUint := r.Context().Value("id").(uint)
-	token.CashierId = uint(cashierIdUint)
-
-	eUser, err := u.userService.CheckTokenCashier(r.Context(), token.CashierId, token)
-	if err != nil {
-		WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
-		return
-	}
-
-	response := map[string]any{
-		"user_id": int(eUser.ID),
-		"name": eUser.Username,
-		"message": "token benar",
-	}
-
-	WriteJSON(w, http.StatusOK, response)
-
 
 }

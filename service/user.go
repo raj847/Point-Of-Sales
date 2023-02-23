@@ -12,7 +12,6 @@ import (
 	"vandesar/utils"
 )
 
-
 type UserService struct {
 	userRepository *repository.UserRepository
 }
@@ -24,11 +23,11 @@ func NewUserService(userRepository *repository.UserRepository) *UserService {
 }
 
 var (
-	ErrUserNotFound = errors.New("user not found")
+	ErrUserNotFound          = errors.New("user not found")
 	ErrUserPasswordDontMatch = errors.New("password not match")
-	ErrUserAlreadyExists = errors.New("user already exists")
-	ErrEmailInvalid = errors.New("email invalid")
-	ErrPasswordInvalid = errors.New("password invalid")
+	ErrUserAlreadyExists     = errors.New("user already exists")
+	ErrEmailInvalid          = errors.New("email invalid")
+	ErrPasswordInvalid       = errors.New("password invalid")
 )
 
 func (s *UserService) LoginAdmin(ctx context.Context, adminReq entity.AdminLogin) (id entity.Admin, err error) {
@@ -58,7 +57,7 @@ func (s *UserService) ChangeAdminPassword(ctx context.Context, changePassReq ent
 
 	err = s.userRepository.ChangeAdminPassword(ctx, existingAdmin.ID, hashedPassword)
 	if err != nil {
-		return  entity.Admin{}, err
+		return entity.Admin{}, err
 	}
 
 	existingAdmin.Password = hashedPassword
@@ -185,21 +184,21 @@ func validatePassword(password string) bool {
 		}
 	}
 
-	return  moreThan && lower && upper && symbol
+	return moreThan && lower && upper && symbol
 }
 
-func (s *UserService) CheckTokenAdmin(ctx context.Context,id uint,token entity.CheckTokenAdmin) (entity.Admin, error) {
-	existingAdmin, err := s.userRepository.GetAdminByID(ctx, token.AdminID)
+func (s *UserService) CheckTokenAdmin(ctx context.Context, id uint, token entity.CheckToken) (entity.Admin, error) {
+	existingAdmin, err := s.userRepository.GetAdminByID(ctx, token.UserId)
 	if err != nil {
 		return entity.Admin{}, ErrUserNotFound
 	}
-return existingAdmin,nil
+	return existingAdmin, nil
 }
 
-func (s *UserService) CheckTokenCashier(ctx context.Context,id uint,token entity.CheckTokenCashier) (entity.Cashier, error) {
-	existingCashier, err := s.userRepository.GetCashierByID(ctx, token.CashierId)
+func (s *UserService) CheckTokenCashier(ctx context.Context, id uint, token entity.CheckToken) (entity.Cashier, error) {
+	existingCashier, err := s.userRepository.GetCashierByID(ctx, token.UserId)
 	if err != nil {
 		return entity.Cashier{}, ErrUserNotFound
 	}
-return existingCashier,nil
+	return existingCashier, nil
 }
