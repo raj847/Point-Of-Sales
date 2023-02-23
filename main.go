@@ -40,11 +40,17 @@ func main() {
 	db := utils.GetDBConnection()
 	mux = RunServer(db, mux)
 
-	handler := cors.Default().Handler(mux)
+	c := cors.New(cors.Options{
+        AllowedOrigins: []string{"*"},
+        AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"*"},
+		AllowCredentials: true,
+    })
+
+	handler := c.Handler(mux)
 
 	fmt.Println("Server is running on port 8080")
 	err = http.ListenAndServe(":8080", handler)
-	// http.ListenAndServeTLS()
 	if err != nil {
 		log.Fatalf("cannot start server: %v", err)
 	}
