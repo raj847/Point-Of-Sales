@@ -25,7 +25,7 @@ type APIHandler struct {
 }
 
 func main() {
-	err := os.Setenv("DATABASE_URL", "postgres://root:secret@localhost:5432/pos")
+	err := os.Setenv("DATABASE_URL", "postgres://postgres:suleng@localhost:9090/postgres")
 	if err != nil {
 		log.Fatalf("cannot set env: %v", err)
 	}
