@@ -115,6 +115,27 @@ func (r *UserRepository) DeleteCashier(ctx context.Context, id uint) error {
 	return err
 }
 
+func (r *UserRepository) GetCashierbyAdmin(ctx context.Context, id uint) ([]entity.Cashier, error) {
+	var listCashier []entity.Cashier
+
+	kasir, err := r.db.
+		WithContext(ctx).
+		Table("cashiers").
+		Select("*").
+		Where("admin_id = ? AND deleted_at IS NULL", id).
+		Rows()
+	if err != nil {
+		return []entity.Cashier{}, err
+	}
+	defer kasir.Close()
+
+	for kasir.Next() {
+		r.db.ScanRows(kasir, &listCashier)
+	}
+
+	return listCashier, nil
+}
+
 // func (r *UserRepository) CheckTokenAdmin(token entity.CheckTokenAdmin) (error) {
 // 	err := r.db.Create(&token).Error
 // 	if err != nil {

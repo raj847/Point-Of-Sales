@@ -202,3 +202,6 @@ func (s *UserService) CheckTokenCashier(ctx context.Context, id uint, token enti
 	}
 	return existingCashier, nil
 }
+func (s *UserService) GetAllCashiers(ctx context.Context, id uint) ([]entity.Cashier, error) {
+	return s.userRepository.GetCashierbyAdmin(ctx, id)
+}

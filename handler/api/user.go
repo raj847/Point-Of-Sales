@@ -413,3 +413,15 @@ func (u *UserAPI) CheckToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
+func (u *UserAPI) GetAllCashiers(w http.ResponseWriter, r *http.Request) {
+	adminId := r.Context().Value("id").(uint)
+
+	list, err := u.userService.GetAllCashiers(r.Context(), adminId)
+	if err != nil {
+		WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
+		return
+	}
+
+	WriteJSON(w, http.StatusOK, list)
+}
