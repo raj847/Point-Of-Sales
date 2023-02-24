@@ -108,7 +108,7 @@ func (s *UserService) RegisterAdmin(ctx context.Context, adminReq entity.AdminRe
 		Email:    adminReq.Email,
 		Role:     "admin",
 		Password: adminReq.Password,
-		PhotoURL: adminReq.PhotoURL,
+		// PhotoURL: adminReq.PhotoURL,
 	}
 
 	hashedPassword, err := utils.HashPassword(admin.Password)
@@ -204,4 +204,17 @@ func (s *UserService) CheckTokenCashier(ctx context.Context, id uint, token enti
 }
 func (s *UserService) GetAllCashiers(ctx context.Context, id uint) ([]entity.Cashier, error) {
 	return s.userRepository.GetCashierbyAdmin(ctx, id)
+}
+
+func (s *UserService) DeleteCashier(ctx context.Context, id uint) error {
+	return s.userRepository.DeleteCashier(ctx, id)
+}
+
+func (s *UserService) UpdateOnline(ctx context.Context, id uint, online bool) (entity.Cashier, error) {
+	kasir, err := s.userRepository.UpdateOnline(ctx, id, online)
+	if err != nil {
+		return entity.Cashier{}, err
+	}
+
+	return kasir, nil
 }

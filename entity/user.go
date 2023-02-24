@@ -10,7 +10,7 @@ type Admin struct {
 	Email    string `json:"email" gorm:"type:varchar(255);not null" validate:"required,email"`
 	Password string `json:"-" gorm:"type:varchar(255);not null"`
 	Role     string `json:"role" gorm:"type:varchar(50);not null" validate:"required"`
-	PhotoURL string `json:"photo_url" gorm:"type:varchar(255)"`
+	// PhotoURL string `json:"photo_url" gorm:"type:varchar(255)"`
 }
 
 type Cashier struct {
@@ -19,6 +19,7 @@ type Cashier struct {
 	Username string `json:"username" gorm:"type:varchar(255);not null" validate:"required"`
 	Password string `json:"-" gorm:"type:varchar(255);not null"`
 	Role     string `json:"role" gorm:"type:varchar(50);not null" validate:"required"`
+	Online   bool   `json:"online" gorm:"type:boolean, default=false`
 }
 
 type AdminLogin struct {
@@ -37,12 +38,13 @@ type AdminRegister struct {
 	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
 	Role     string `json:"-"`
-	PhotoURL string `json:"photo_url"`
+	// PhotoURL string `json:"photo_url"`
 }
 
 type CashierLogin struct {
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
+	Online   bool   `json:"online" gorm:"type:boolean, default=false`
 }
 
 type CashierRegister struct {

@@ -101,6 +101,20 @@ func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 		),
 	)
 
+	MuxRoute(mux, "PATCH", "/api/v1/cashier/ongleng",
+		middleware.Patch(
+			middleware.Auth(
+				middleware.MustCashier(
+					http.HandlerFunc(apiHandler.UserAPIHandler.UpdateOnline)))))
+
+	MuxRoute(mux, "DELETE", "/api/v1/cashier/delete",
+		middleware.Delete(
+			middleware.Auth(
+				middleware.MustAdmin(
+					http.HandlerFunc(apiHandler.UserAPIHandler.DeleteCashier)))),
+		"?cashier_id=",
+	)
+
 	MuxRoute(mux, "PUT", "/api/v1/users/admin/change-password",
 		middleware.Put(
 			middleware.MustAdmin(

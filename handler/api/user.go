@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
+	"strconv"
 	"time"
 	"vandesar/entity"
 	"vandesar/service"
@@ -165,42 +165,48 @@ func (u *UserAPI) ChangeAdminPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UserAPI) AdminRegister(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
+	// r.ParseForm()
 
-	// get form file from request
-	file, header, err := r.FormFile("file")
-	if err != nil {
-		fmt.Println(file)
-		fmt.Println(err.Error())
-		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("invalid file"))
-		return
-	}
+	// // get form file from request
+	// file, header, err := r.FormFile("file")
+	// if err != nil {
+	// 	fmt.Println(file)
+	// 	fmt.Println(err.Error())
+	// 	WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("invalid file"))
+	// 	return
+	// }
 
-	_, err = u.minioClient.PutObject(r.Context(), "rajendra", header.Filename, file, header.Size, minio.PutObjectOptions{
-		UserMetadata: map[string]string{
-			"x-amz-acl": "public-read",
-		},
-		ContentType: "image/jpeg",
-	})
-	if err != nil {
-		log.Println(err)
-	}
+	// _, err = u.minioClient.PutObject(r.Context(), "rajendra", header.Filename, file, header.Size, minio.PutObjectOptions{
+	// 	UserMetadata: map[string]string{
+	// 		"x-amz-acl": "public-read",
+	// 	},
+	// 	ContentType: "image/jpeg",
+	// })
+	// if err != nil {
+	// 	log.Println(err)
+	// }
 
-	fileName := fmt.Sprintf("https://is3.cloudhost.id/rajendra/%s", header.Filename)
+	// fileName := fmt.Sprintf("https://is3.cloudhost.id/rajendra/%s", header.Filename)
 
-	// get form value from request
+	// // get form value from request
 
-	email := r.FormValue("email")
-	password := r.FormValue("password")
-	role := "admin"
-	shopName := r.FormValue("shop_name")
+	// email := r.FormValue("email")
+	// password := r.FormValue("password")
+	// role := "admin"
+	// shopName := r.FormValue("shop_name")
 
 	user := entity.AdminRegister{
-		Email:    email,
-		Password: password,
-		Role:     role,
-		ShopName: shopName,
-		PhotoURL: fileName,
+		// Email:    email,
+		// Password: password,
+		// Role:     role,
+		// ShopName: shopName,
+		// PhotoURL: fileName,
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("invalid decode json"))
+		return
 	}
 
 	if user.Email == "" || user.ShopName == "" || user.Password == "" {
@@ -424,4 +430,58 @@ func (u *UserAPI) GetAllCashiers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	WriteJSON(w, http.StatusOK, list)
+}
+
+func (p *UserAPI) DeleteCashier(w http.ResponseWriter, r *http.Request) {
+	adminIdUint := r.Context().Value("id").(uint)
+	if adminIdUint == 0 {
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("invalid user id"))
+		return
+	}
+
+	cashierID := r.URL.Query().Get("cashier_id")
+	cID, _ := strconv.Atoi(cashierID)
+	err := p.userService.DeleteCashier(r.Context(), uint(cID))
+	if err != nil {
+		WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
+		return
+	}
+
+	response := map[string]any{
+		"user_id":    adminIdUint,
+		"cashier_id": cID,
+		"message":    "success delete cashier",
+	}
+
+	WriteJSON(w, http.StatusOK, response)
+}
+
+func (p *UserAPI) UpdateOnline(w http.ResponseWriter, r *http.Request) {
+	var cashier entity.CashierLogin
+
+	err := json.NewDecoder(r.Body).Decode(&cashier.Online)
+	if err != nil {
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("invalid product request"))
+		return
+	}
+
+	adminIdUint := r.Context().Value("id").(uint)
+	if adminIdUint == 0 {
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("invalid user id"))
+		return
+	}
+
+	cashiers, err := p.userService.UpdateOnline(r.Context(), adminIdUint, cashier.Online)
+	if err != nil {
+		WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
+		return
+	}
+
+	response := map[string]any{
+		"cashier_id": adminIdUint,
+		"online":     cashiers.Online,
+		"message":    "success update product",
+	}
+
+	WriteJSON(w, http.StatusOK, response)
 }
