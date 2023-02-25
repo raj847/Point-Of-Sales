@@ -44,6 +44,13 @@ func (p *ProductRepository) AddProduct(ctx context.Context, products entity.Prod
 	return err
 }
 
+func (p *ProductRepository) AddProductAkeh(ctx context.Context, products []entity.Product) error {
+	err := p.db.
+		WithContext(ctx).
+		Create(&products).Error
+	return err
+}
+
 func (p *ProductRepository) GetProductByID(ctx context.Context, id int) (entity.Product, error) {
 	var productResult entity.Product
 

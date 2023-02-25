@@ -19,7 +19,7 @@ type Cashier struct {
 	Username string `json:"username" gorm:"type:varchar(255);not null" validate:"required"`
 	Password string `json:"-" gorm:"type:varchar(255);not null"`
 	Role     string `json:"role" gorm:"type:varchar(50);not null" validate:"required"`
-	Online   bool   `json:"online" gorm:"type:boolean, default=false`
+	// Online   bool   `json:"online" gorm:"type:boolean`
 }
 
 type AdminLogin struct {
@@ -44,7 +44,7 @@ type AdminRegister struct {
 type CashierLogin struct {
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
-	Online   bool   `json:"online" gorm:"type:boolean, default=false`
+	// Online   bool   `json:"-"`
 }
 
 type CashierRegister struct {

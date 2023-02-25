@@ -11,8 +11,8 @@ import (
 )
 
 type ProductAPI struct {
-	productService    *service.ProductService
-	userService *service.UserService
+	productService *service.ProductService
+	userService    *service.UserService
 }
 
 func NewProductAPI(
@@ -20,8 +20,8 @@ func NewProductAPI(
 	userService *service.UserService,
 ) *ProductAPI {
 	return &ProductAPI{
-		productService:    productService,
-		userService:       userService,
+		productService: productService,
+		userService:    userService,
 	}
 }
 
@@ -117,6 +117,51 @@ func (p *ProductAPI) CreateNewProduct(w http.ResponseWriter, r *http.Request) {
 		"user_id":    adminIdUint,
 		"product_id": prod.ID,
 		"message":    "success create new product",
+	}
+
+	WriteJSON(w, http.StatusCreated, response)
+}
+
+func (p *ProductAPI) CreateNewProductAkeh(w http.ResponseWriter, r *http.Request) {
+	var product []entity.ProductRequest
+	dontol := []entity.Product{}
+
+	err := json.NewDecoder(r.Body).Decode(&product)
+	if err != nil {
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("invalid product request"))
+		return
+	}
+	adminIdUint := r.Context().Value("id").(uint)
+	if err != nil {
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("invalid user id"))
+		return
+	}
+
+	for _, v := range product {
+		if v.Name == "" {
+			WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("invalid name request"))
+			return
+		}
+		for _, d := range dontol {
+			d.UserID = adminIdUint
+			d.Code = v.Code
+			d.Name = v.Name
+			d.Price = v.Price
+			d.Stock = v.Stock
+			d.Modal = v.Modal
+		}
+	}
+
+	prod, err := p.productService.AddProductAkeh(r.Context(), dontol)
+	if err != nil {
+		WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
+		return
+	}
+
+	response := map[string]any{
+		"user_id": adminIdUint,
+		"list":    prod,
+		"message": "success create AKEH new product",
 	}
 
 	WriteJSON(w, http.StatusCreated, response)

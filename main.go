@@ -101,11 +101,11 @@ func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 		),
 	)
 
-	MuxRoute(mux, "PATCH", "/api/v1/cashier/ongleng",
-		middleware.Patch(
-			middleware.Auth(
-				middleware.MustCashier(
-					http.HandlerFunc(apiHandler.UserAPIHandler.UpdateOnline)))))
+	// MuxRoute(mux, "PATCH", "/api/v1/cashier/ongleng",
+	// 	middleware.Patch(
+	// 		middleware.Auth(
+	// 			middleware.MustCashier(
+	// 				http.HandlerFunc(apiHandler.UserAPIHandler.UpdateOnline)))))
 
 	MuxRoute(mux, "DELETE", "/api/v1/cashier/delete",
 		middleware.Delete(
@@ -132,6 +132,12 @@ func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 			middleware.Auth(
 				middleware.MustAdmin(
 					http.HandlerFunc(apiHandler.ProductAPIHandler.CreateNewProduct)))))
+
+	MuxRoute(mux, "POST", "/api/v1/products/createmany",
+		middleware.Post(
+			middleware.Auth(
+				middleware.MustAdmin(
+					http.HandlerFunc(apiHandler.ProductAPIHandler.CreateNewProductAkeh)))))
 
 	MuxRoute(mux, "GET", "/api/v1/products",
 		middleware.Get(

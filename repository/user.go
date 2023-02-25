@@ -136,15 +136,15 @@ func (r *UserRepository) GetCashierbyAdmin(ctx context.Context, id uint) ([]enti
 	return listCashier, nil
 }
 
-func (r *UserRepository) UpdateOnline(ctx context.Context, id uint, online bool) (entity.Cashier, error) {
-	dontil := entity.Cashier{}
-	err := r.db.WithContext(ctx).Table("cashiers").Where("id = ?", id).Update("online", online).Error
-	if err != nil {
-		return entity.Cashier{}, err
-	}
+// func (r *UserRepository) UpdateOnline(ctx context.Context, id uint, online bool) (entity.Cashier, error) {
+// 	dontil := entity.Cashier{}
+// 	err := r.db.WithContext(ctx).Table("cashiers").Where("id = ?", id).Update("online", online).Error
+// 	if err != nil {
+// 		return entity.Cashier{}, err
+// 	}
 
-	return dontil, nil
-}
+// 	return dontil, nil
+// }
 
 // func (r *UserRepository) CheckTokenAdmin(token entity.CheckTokenAdmin) (error) {
 // 	err := r.db.Create(&token).Error

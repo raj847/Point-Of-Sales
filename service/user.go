@@ -210,11 +210,11 @@ func (s *UserService) DeleteCashier(ctx context.Context, id uint) error {
 	return s.userRepository.DeleteCashier(ctx, id)
 }
 
-func (s *UserService) UpdateOnline(ctx context.Context, id uint, online bool) (entity.Cashier, error) {
-	kasir, err := s.userRepository.UpdateOnline(ctx, id, online)
-	if err != nil {
-		return entity.Cashier{}, err
-	}
+// func (s *UserService) UpdateOnline(ctx context.Context, id uint, online bool) (entity.Cashier, error) {
+// 	kasir, err := s.userRepository.UpdateOnline(ctx, id, online)
+// 	if err != nil {
+// 		return entity.Cashier{}, err
+// 	}
 
-	return kasir, nil
-}
+// 	return kasir, nil
+// }

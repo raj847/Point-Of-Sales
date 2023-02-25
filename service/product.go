@@ -29,6 +29,14 @@ func (s *ProductService) AddProduct(ctx context.Context, product entity.Product)
 	return product, nil
 }
 
+func (s *ProductService) AddProductAkeh(ctx context.Context, product []entity.Product) ([]entity.Product, error) {
+	err := s.prodRepo.AddProductAkeh(ctx, product)
+	if err != nil {
+		return []entity.Product{}, err
+	}
+	return product, nil
+}
+
 func (s *ProductService) GetProductByID(ctx context.Context, id int) (entity.Product, error) {
 	return s.prodRepo.GetProductByID(ctx, id)
 }
