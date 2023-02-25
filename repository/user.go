@@ -85,7 +85,9 @@ func (r *UserRepository) GetCashierByID(ctx context.Context, id uint) (entity.Ca
 
 func (r *UserRepository) GetCashierByUsername(ctx context.Context, username string) (entity.Cashier, error) {
 	var res entity.Cashier
-	err := r.db.WithContext(ctx).Table("cashiers").Where("username = ?", username).Find(&res).Error
+	err := r.db.WithContext(ctx).Table("cashiers").Select("*,admins.name").Joins("inner join admins on admins.id = cashiers.admin_id where cashiers.deleted_at IS NULL").Where("username = ?", username).Find(&res).Error
+	//Where("username = ?", username)
+	//c.db.Table("carts").Select("carts.id, carts.product_id,products.name, carts.quantity,carts.total_price ").Joins("inner join products on products.id = carts.product_id where carts.deleted_at IS NULL").Scan(&joinCrot)
 	if err != nil {
 		return entity.Cashier{}, err
 	}
