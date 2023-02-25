@@ -289,7 +289,9 @@ func (u *UserAPI) CashierLogin(w http.ResponseWriter, r *http.Request) {
 	})
 
 	response := map[string]any{
-		"cashier":     eUser,
+		"user_id":     int(eUser.ID),
+		"role":        "cashier",
+		"nama":        eUser.Username,
 		"tokenCookie": tokenString,
 	}
 
