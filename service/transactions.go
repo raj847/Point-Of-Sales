@@ -44,3 +44,12 @@ func (t *TransactionService) ReadTransAdmin(adminId uint) ([]entity.TransactionR
 func (t *TransactionService) ReadTransAdminDebt(adminId uint) ([]entity.TransactionReq, error) {
 	return t.transRepo.ReadTransByAdminDebt(adminId)
 }
+
+func (t *TransactionService) UpdateTransDebt(trans entity.TransactionReq, tranId uint) (entity.Transaction, error) {
+	result, err := t.transRepo.UpdateTransDebt(trans, tranId)
+	if err != nil {
+		return entity.Transaction{}, err
+	}
+
+	return result, nil
+}

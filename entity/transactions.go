@@ -5,34 +5,34 @@ import (
 )
 
 type Prods struct {
-	ProductID  uint    `json:"product_id"`
+	ProductID  uint    `json:"id"`
 	Name       string  `json:"name"`
 	Code       string  `json:"code"`
 	Price      float64 `json:"price"`
-	Quantity   uint    `json:"quantity"`
-	TotalPrice float64 `json:"total_price"`
+	Quantity   uint    `json:"qty"`
+	TotalPrice float64 `json:"totalPrice"`
 	Modal      float32 `json:"modal"`
 }
 
 type TransactionReq struct {
-	UserID      uint    `json:"user_id"`
-	Debt        float64 `json:"debt"`
+	UserID      uint    `json:"cashierId"`
+	Debt        float64 `json:"change"`
 	Status      string  `json:"status"`
-	Money       float64 `json:"money"`
-	CartList    []Prods `json:"cart_list"`
-	TotalPrice  float64 `json:"total_price"`
-	TotalProfit float64 `json:"total_profit"`
+	Money       float64 `json:"pay"`
+	CartList    []Prods `json:"cartList"`
+	TotalPrice  float64 `json:"total"`
+	TotalProfit float64 `json:"totalProfit"`
 	Notes       string  `json:"notes"`
 }
 
 type Transaction struct {
 	gorm.Model
-	UserID      uint    `json:"user_id"` // cashier_id
-	Debt        float64 `json:"debt"`
+	UserID      uint    `json:"cashierId"` // cashier_id
+	Debt        float64 `json:"change"`
 	Status      string  `json:"status"`
-	Money       float64 `json:"money"`
-	CartList    []byte  `json:"cart_list"`
-	TotalPrice  float64 `json:"total_price"`
+	Money       float64 `json:"pay"`
+	CartList    []byte  `json:"cartList"`
+	TotalPrice  float64 `json:"total"`
 	Notes       string  `json:"notes"`
-	TotalProfit float64 `json:"total_profit"`
+	TotalProfit float64 `json:"totalProfit"`
 }

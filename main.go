@@ -211,6 +211,17 @@ func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 		"?transaction_id=",
 	)
 
+	MuxRoute(mux, "PUT", "/api/v1/transactions/updatedebt",
+		middleware.Put(
+			middleware.Auth(
+				middleware.MustAdmin(
+					http.HandlerFunc(apiHandler.TransactionAPIHandler.UpdateTransactionDebt),
+				),
+			),
+		),
+		"?transaction_id=",
+	)
+
 	MuxRoute(mux, "DELETE", "/api/v1/transactions/delete",
 		middleware.Delete(
 			middleware.Auth(
