@@ -212,3 +212,39 @@ func (c *TransactionRepository) ReadTransByAdmin(adminId uint) ([]entity.Transac
 
 	return resp, nil
 }
+
+func (c *TransactionRepository) ReadTransByAdminDebt(adminId uint) ([]entity.TransactionReq, error) {
+	var transactions []entity.Transaction
+	debt := "hutang"
+	err := c.db.
+		Table("transactions").
+		Select("*").
+		Joins("JOIN cashiers ON cashiers.id = transactions.user_id").
+		Where("cashiers.admin_id = ?", adminId).
+		Where("transactions.status = ?", debt).
+		Where("transactions.deleted_at IS NULL").
+		Scan(&transactions).Error
+	if err != nil {
+		return nil, err
+	}
+
+	resp := make([]entity.TransactionReq, 0, len(transactions))
+
+	for _, v := range transactions {
+		var cartList []entity.Prods
+		_ = json.Unmarshal(v.CartList, &cartList)
+
+		resp = append(resp, entity.TransactionReq{
+			UserID:      v.UserID,
+			Debt:        v.Debt,
+			Status:      v.Status,
+			Money:       v.Money,
+			CartList:    cartList,
+			TotalPrice:  v.TotalPrice,
+			Notes:       v.Notes,
+			TotalProfit: v.TotalProfit,
+		})
+	}
+
+	return resp, nil
+}

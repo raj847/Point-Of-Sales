@@ -72,6 +72,18 @@ func (p *TransactionAPI) GetAllTransactionsByAdmin(w http.ResponseWriter, r *htt
 	WriteJSON(w, http.StatusOK, transactionList)
 }
 
+func (p *TransactionAPI) GetAllTransactionsByAdminDebt(w http.ResponseWriter, r *http.Request) {
+	userId := r.Context().Value("id").(uint)
+
+	transactionList, err := p.transactionService.ReadTransAdminDebt(userId)
+	if err != nil {
+		WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
+		return
+	}
+
+	WriteJSON(w, http.StatusOK, transactionList)
+}
+
 func (p *TransactionAPI) GetAllTransactionsByCashier(w http.ResponseWriter, r *http.Request) {
 	userId := r.Context().Value("id").(uint)
 
@@ -119,7 +131,6 @@ func (p *TransactionAPI) UpdateTransaction(w http.ResponseWriter, r *http.Reques
 		WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
 		return
 	}
-
 
 	response := map[string]any{
 		"user_id":    adminIdUint,

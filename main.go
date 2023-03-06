@@ -25,7 +25,7 @@ type APIHandler struct {
 }
 
 func main() {
-	err := os.Setenv("DATABASE_URL", "postgres://postgres:suleng@localhost:9090/postgres")
+	err := os.Setenv("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/postgres")
 	if err != nil {
 		log.Fatalf("cannot set env: %v", err)
 	}
@@ -173,8 +173,18 @@ func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 	MuxRoute(mux, "GET", "/api/v1/transactions/admin",
 		middleware.Get(
 			middleware.Auth(
-				middleware.MustCashier(
+				middleware.MustAdmin(
 					http.HandlerFunc(apiHandler.TransactionAPIHandler.GetAllTransactionsByAdmin),
+				),
+			),
+		),
+	)
+
+	MuxRoute(mux, "GET", "/api/v1/transactions/admin/debt",
+		middleware.Get(
+			middleware.Auth(
+				middleware.MustAdmin(
+					http.HandlerFunc(apiHandler.TransactionAPIHandler.GetAllTransactionsByAdminDebt),
 				),
 			),
 		),

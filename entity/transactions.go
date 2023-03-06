@@ -6,11 +6,12 @@ import (
 
 type Prods struct {
 	ProductID  uint    `json:"product_id"`
-	Name string `json:"name"`
-	Code string `json:"code"`
+	Name       string  `json:"name"`
+	Code       string  `json:"code"`
 	Price      float64 `json:"price"`
 	Quantity   uint    `json:"quantity"`
 	TotalPrice float64 `json:"total_price"`
+	Modal      float32 `json:"modal"`
 }
 
 type TransactionReq struct {
