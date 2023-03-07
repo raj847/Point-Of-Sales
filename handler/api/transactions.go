@@ -141,6 +141,44 @@ func (p *TransactionAPI) UpdateTransaction(w http.ResponseWriter, r *http.Reques
 	WriteJSON(w, http.StatusOK, response)
 }
 
+func (p *TransactionAPI) UpdateTransactionDebt(w http.ResponseWriter, r *http.Request) {
+	var product entity.TransactionReq
+
+	err := json.NewDecoder(r.Body).Decode(&product)
+	if err != nil {
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("invalid decode json"))
+		return
+	}
+
+	adminIdUint := r.Context().Value("id").(uint)
+	if adminIdUint == 0 {
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("invalid user id"))
+		return
+	}
+
+	id := r.URL.Query().Get("transaction_id")
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("invalid transaction id"))
+		return
+	}
+
+	products, err := p.transactionService.UpdateTransDebt(
+		&product.Status, &product.Debt, uint(idInt))
+	if err != nil {
+		WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
+		return
+	}
+
+	response := map[string]any{
+		"user_id":    adminIdUint,
+		"product_id": products.ID,
+		"message":    "success update product",
+	}
+
+	WriteJSON(w, http.StatusOK, response)
+}
+
 func (p *TransactionAPI) DeleteTransaction(w http.ResponseWriter, r *http.Request) {
 	adminIdUint := r.Context().Value("id").(uint)
 	if adminIdUint == 0 {
