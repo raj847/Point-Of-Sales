@@ -133,9 +133,9 @@ func (p *TransactionAPI) UpdateTransaction(w http.ResponseWriter, r *http.Reques
 	}
 
 	response := map[string]any{
-		"user_id":    adminIdUint,
-		"product_id": products.ID,
-		"message":    "success update transaction",
+		"user_id":        adminIdUint,
+		"transaction_id": products.ID,
+		"message":        "success update transaction",
 	}
 
 	WriteJSON(w, http.StatusOK, response)
@@ -174,9 +174,9 @@ func (p *TransactionAPI) UpdateTransactionDebt(w http.ResponseWriter, r *http.Re
 	}
 
 	response := map[string]any{
-		"user_id":    adminIdUint,
-		"product_id": products.ID,
-		"message":    "success update debt transaction",
+		"user_id":        adminIdUint,
+		"transaction_id": products.ID,
+		"message":        "success update debt transaction",
 	}
 
 	WriteJSON(w, http.StatusOK, response)

@@ -179,11 +179,11 @@ func (c *TransactionRepository) ReadTransByDateRange(startDate, endDate time.Tim
 	return resp, nil
 }
 
-func (c *TransactionRepository) ReadTransByAdmin(adminId uint) ([]entity.TransactionReq, error) {
+func (c *TransactionRepository) ReadTransByAdmin(adminId uint) ([]entity.ReadTransaction, error) {
 	var transactions []entity.Transaction
 	err := c.db.
 		Table("transactions").
-		Select("*").
+		Select("*,transactions.created_at,transactions.updated_at,transactions.id").
 		Joins("JOIN cashiers ON cashiers.id = transactions.user_id").
 		Where("cashiers.admin_id = ?", adminId).
 		Where("transactions.deleted_at IS NULL").
@@ -192,13 +192,16 @@ func (c *TransactionRepository) ReadTransByAdmin(adminId uint) ([]entity.Transac
 		return nil, err
 	}
 
-	resp := make([]entity.TransactionReq, 0, len(transactions))
+	resp := make([]entity.ReadTransaction, 0, len(transactions))
 
 	for _, v := range transactions {
 		var cartList []entity.Prods
 		_ = json.Unmarshal(v.CartList, &cartList)
 
-		resp = append(resp, entity.TransactionReq{
+		resp = append(resp, entity.ReadTransaction{
+			ID:          v.ID,
+			CreatedAt:   v.CreatedAt,
+			UpdatedAt:   v.UpdatedAt,
 			UserID:      v.UserID,
 			Debt:        v.Debt,
 			Status:      v.Status,
@@ -208,17 +211,18 @@ func (c *TransactionRepository) ReadTransByAdmin(adminId uint) ([]entity.Transac
 			Notes:       v.Notes,
 			TotalProfit: v.TotalProfit,
 		})
+		fmt.Println(v.ID)
 	}
 
 	return resp, nil
 }
 
-func (c *TransactionRepository) ReadTransByAdminDebt(adminId uint) ([]entity.TransactionReq, error) {
+func (c *TransactionRepository) ReadTransByAdminDebt(adminId uint) ([]entity.ReadTransaction, error) {
 	var transactions []entity.Transaction
 	debt := "hutang"
 	err := c.db.
 		Table("transactions").
-		Select("*").
+		Select("*,transactions.created_at,transactions.updated_at,transactions.id").
 		Joins("JOIN cashiers ON cashiers.id = transactions.user_id").
 		Where("cashiers.admin_id = ?", adminId).
 		Where("transactions.status = ?", debt).
@@ -228,13 +232,16 @@ func (c *TransactionRepository) ReadTransByAdminDebt(adminId uint) ([]entity.Tra
 		return nil, err
 	}
 
-	resp := make([]entity.TransactionReq, 0, len(transactions))
+	resp := make([]entity.ReadTransaction, 0, len(transactions))
 
 	for _, v := range transactions {
 		var cartList []entity.Prods
 		_ = json.Unmarshal(v.CartList, &cartList)
 
-		resp = append(resp, entity.TransactionReq{
+		resp = append(resp, entity.ReadTransaction{
+			ID:          v.ID,
+			CreatedAt:   v.CreatedAt,
+			UpdatedAt:   v.UpdatedAt,
 			UserID:      v.UserID,
 			Debt:        v.Debt,
 			Status:      v.Status,
@@ -248,41 +255,6 @@ func (c *TransactionRepository) ReadTransByAdminDebt(adminId uint) ([]entity.Tra
 
 	return resp, nil
 }
-
-// func (c *TransactionRepository) UpdateTransDebt(status *string, debt *float64, tranId uint) (entity.Transaction, error) {
-// 	var result entity.Transaction
-// 	statuses := "hutang"
-// 	trans := entity.TransactionReq{}
-
-// 	cartList, _ := json.Marshal(trans.CartList)
-// 	transaction := entity.Transaction{
-// 		Model: gorm.Model{
-// 			ID: tranId,
-// 		},
-// 		UserID:      trans.UserID,
-// 		Debt:        trans.Debt,
-// 		Status:      trans.Status,
-// 		Money:       trans.Money,
-// 		CartList:    cartList,
-// 		TotalPrice:  trans.TotalPrice,
-// 		Notes:       trans.Notes,
-// 		TotalProfit: trans.TotalProfit,
-// 	}
-// 	status = &transaction.Status
-// 	debt = &transaction.Debt
-// 	//db.Table("users").Where("id = ?", user.ID).Updates(map[string]interface{}{"name": user.Name, "email": user.Email})
-// 	err := c.db.
-// 		Table("transactions").
-// 		Where("id = ?", tranId).
-// 		Where("status = ?", statuses).
-// 		Updates(map[string]interface{}{"status": status, "debt": debt}).
-// 		First(&result).Error
-// 	if err != nil {
-// 		return entity.Transaction{}, err
-// 	}
-
-// 	return result, nil
-// }
 
 func (c *TransactionRepository) UpdateTransDebt(trans entity.UpdateTrans, tranId uint) (entity.Transaction, error) {
 	var result entity.Transaction

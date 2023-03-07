@@ -37,11 +37,11 @@ func (t *TransactionService) ReadTransCashier(id uint) ([]entity.TransactionReq,
 	return t.transRepo.ReadTransByCashier(id)
 }
 
-func (t *TransactionService) ReadTransAdmin(adminId uint) ([]entity.TransactionReq, error) {
+func (t *TransactionService) ReadTransAdmin(adminId uint) ([]entity.ReadTransaction, error) {
 	return t.transRepo.ReadTransByAdmin(adminId)
 }
 
-func (t *TransactionService) ReadTransAdminDebt(adminId uint) ([]entity.TransactionReq, error) {
+func (t *TransactionService) ReadTransAdminDebt(adminId uint) ([]entity.ReadTransaction, error) {
 	return t.transRepo.ReadTransByAdminDebt(adminId)
 }
 

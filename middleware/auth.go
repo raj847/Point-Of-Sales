@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 	"vandesar/entity"
@@ -27,7 +26,7 @@ func MustAdmin(next http.Handler) http.Handler {
 		}
 
 		token := fields[1]
-		fmt.Println(token)
+		// fmt.Println(token)
 		claims := &entity.Claims{}
 
 		tkn, err := jwt.ParseWithClaims(token, claims, func(t *jwt.Token) (interface{}, error) {
@@ -124,7 +123,7 @@ func Auth(next http.Handler) http.Handler {
 		}
 
 		token := fields[1]
-		fmt.Println(token)
+		// fmt.Println(token)
 		claims := &entity.Claims{}
 
 		tkn, err := jwt.ParseWithClaims(token, claims, func(t *jwt.Token) (interface{}, error) {
@@ -168,7 +167,7 @@ func Checker(next http.Handler) http.Handler {
 		}
 
 		token := fields[1]
-		fmt.Println(token)
+		// fmt.Println(token)
 		claims := &entity.Claims{}
 
 		tkn, err := jwt.ParseWithClaims(token, claims, func(t *jwt.Token) (interface{}, error) {
