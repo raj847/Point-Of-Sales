@@ -249,33 +249,57 @@ func (c *TransactionRepository) ReadTransByAdminDebt(adminId uint) ([]entity.Tra
 	return resp, nil
 }
 
-func (c *TransactionRepository) UpdateTransDebt(status *string, debt *float64, tranId uint) (entity.Transaction, error) {
-	var result entity.Transaction
-	statuses := "hutang"
-	trans := entity.TransactionReq{}
+// func (c *TransactionRepository) UpdateTransDebt(status *string, debt *float64, tranId uint) (entity.Transaction, error) {
+// 	var result entity.Transaction
+// 	statuses := "hutang"
+// 	trans := entity.TransactionReq{}
 
-	cartList, _ := json.Marshal(trans.CartList)
+// 	cartList, _ := json.Marshal(trans.CartList)
+// 	transaction := entity.Transaction{
+// 		Model: gorm.Model{
+// 			ID: tranId,
+// 		},
+// 		UserID:      trans.UserID,
+// 		Debt:        trans.Debt,
+// 		Status:      trans.Status,
+// 		Money:       trans.Money,
+// 		CartList:    cartList,
+// 		TotalPrice:  trans.TotalPrice,
+// 		Notes:       trans.Notes,
+// 		TotalProfit: trans.TotalProfit,
+// 	}
+// 	status = &transaction.Status
+// 	debt = &transaction.Debt
+// 	//db.Table("users").Where("id = ?", user.ID).Updates(map[string]interface{}{"name": user.Name, "email": user.Email})
+// 	err := c.db.
+// 		Table("transactions").
+// 		Where("id = ?", tranId).
+// 		Where("status = ?", statuses).
+// 		Updates(map[string]interface{}{"status": status, "debt": debt}).
+// 		First(&result).Error
+// 	if err != nil {
+// 		return entity.Transaction{}, err
+// 	}
+
+// 	return result, nil
+// }
+
+func (c *TransactionRepository) UpdateTransDebt(trans entity.UpdateTrans, tranId uint) (entity.Transaction, error) {
+	var result entity.Transaction
+
 	transaction := entity.Transaction{
 		Model: gorm.Model{
 			ID: tranId,
 		},
-		UserID:      trans.UserID,
-		Debt:        trans.Debt,
-		Status:      trans.Status,
-		Money:       trans.Money,
-		CartList:    cartList,
-		TotalPrice:  trans.TotalPrice,
-		Notes:       trans.Notes,
-		TotalProfit: trans.TotalProfit,
+		Debt:   trans.Debt,
+		Status: trans.Status,
+		Money:  trans.Money,
 	}
-	status = &transaction.Status
-	debt = &transaction.Debt
-	//db.Table("users").Where("id = ?", user.ID).Updates(map[string]interface{}{"name": user.Name, "email": user.Email})
+
 	err := c.db.
 		Table("transactions").
 		Where("id = ?", tranId).
-		Where("status = ?", statuses).
-		Updates(map[string]interface{}{"status": status, "debt": debt}).
+		Updates(&transaction).
 		First(&result).Error
 	if err != nil {
 		return entity.Transaction{}, err
