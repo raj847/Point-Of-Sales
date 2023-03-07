@@ -142,7 +142,7 @@ func (p *TransactionAPI) UpdateTransaction(w http.ResponseWriter, r *http.Reques
 }
 
 func (p *TransactionAPI) UpdateTransactionDebt(w http.ResponseWriter, r *http.Request) {
-	var product entity.TransactionReq
+	var product entity.UpdateTrans
 
 	err := json.NewDecoder(r.Body).Decode(&product)
 	if err != nil {

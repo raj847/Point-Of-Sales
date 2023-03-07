@@ -268,7 +268,7 @@ func (c *TransactionRepository) UpdateTransDebt(trans entity.UpdateTrans, tranId
 		Money:  trans.Money,
 	}
 
-	err := c.db.
+	err := c.db.Debug().
 		Table("transactions").
 		Where("id = ?", tranId).
 		Updates(&transaction).
@@ -276,6 +276,8 @@ func (c *TransactionRepository) UpdateTransDebt(trans entity.UpdateTrans, tranId
 	if err != nil {
 		return entity.Transaction{}, err
 	}
+	result.Debt = transaction.Debt
+	c.db.Save(&result)
 
 	return result, nil
 }
