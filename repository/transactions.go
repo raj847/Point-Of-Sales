@@ -106,11 +106,11 @@ func (c *TransactionRepository) DeleteTrans(id uint) error {
 	return nil
 }
 
-func (c *TransactionRepository) ReadTransByCashier(userId uint) ([]entity.TransactionReq, error) {
+func (c *TransactionRepository) ReadTransByCashier(userId uint) ([]entity.ReadTransaction, error) {
 	var transactions []entity.Transaction
 	err := c.db.
 		Table("transactions").
-		Select("*").
+		Select("transactions.*,transactions.created_at,transactions.updated_at,transactions.id").
 		Where("user_id = ?", userId).
 		Where("deleted_at IS NULL").
 		Scan(&transactions).Error
@@ -119,13 +119,16 @@ func (c *TransactionRepository) ReadTransByCashier(userId uint) ([]entity.Transa
 		return nil, err
 	}
 
-	resp := make([]entity.TransactionReq, 0, len(transactions))
+	resp := make([]entity.ReadTransaction, 0, len(transactions))
 
 	for _, v := range transactions {
 		var cartList []entity.Prods
 		_ = json.Unmarshal(v.CartList, &cartList)
 
-		resp = append(resp, entity.TransactionReq{
+		resp = append(resp, entity.ReadTransaction{
+			ID:          v.ID,
+			CreatedAt:   v.CreatedAt,
+			UpdatedAt:   v.UpdatedAt,
 			UserID:      v.UserID,
 			Debt:        v.Debt,
 			Status:      v.Status,

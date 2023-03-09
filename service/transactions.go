@@ -33,7 +33,7 @@ func (t *TransactionService) DeleteTrans(id uint) error {
 	return t.transRepo.DeleteTrans(id)
 }
 
-func (t *TransactionService) ReadTransCashier(id uint) ([]entity.TransactionReq, error) {
+func (t *TransactionService) ReadTransCashier(id uint) ([]entity.ReadTransaction, error) {
 	return t.transRepo.ReadTransByCashier(id)
 }
 
