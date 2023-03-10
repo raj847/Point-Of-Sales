@@ -48,9 +48,6 @@ func (u *UserAPI) AdminLogin(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, service.ErrUserNotFound) {
 			WriteJSON(w, http.StatusNotFound, entity.NewErrorResponse(err.Error()))
 			return
-		} else if errors.Is(err, service.ErrUserNotFound) {
-			WriteJSON(w, http.StatusNotFound, entity.NewErrorResponse(err.Error()))
-			return
 		} else if errors.Is(err, service.ErrUserPasswordDontMatch) {
 			WriteJSON(w, http.StatusNotFound, entity.NewErrorResponse(err.Error()))
 			return
@@ -87,6 +84,7 @@ func (u *UserAPI) AdminLogin(w http.ResponseWriter, r *http.Request) {
 		"role":        "admin",
 		"nama":        eUser.ShopName,
 		"message":     "login success",
+		"email":       eUser.Email,
 		"tokenCookie": tokenString,
 	}
 
@@ -120,7 +118,7 @@ func (u *UserAPI) ChangeAdminPassword(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, service.ErrUserNotFound) {
 			WriteJSON(w, http.StatusNotFound, entity.NewErrorResponse(err.Error()))
 			return
-		} else if errors.Is(err, service.ErrUserNotFound) {
+		} else if errors.Is(err, service.ErrPasswordInvalid) {
 			WriteJSON(w, http.StatusNotFound, entity.NewErrorResponse(err.Error()))
 			return
 		} else if errors.Is(err, service.ErrUserPasswordDontMatch) {
@@ -321,9 +319,6 @@ func (u *UserAPI) CashierRegister(w http.ResponseWriter, r *http.Request) {
 			WriteJSON(w, http.StatusConflict, entity.NewErrorResponse(err.Error()))
 			return
 		} else if errors.Is(err, service.ErrPasswordInvalid) {
-			WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse(err.Error()))
-			return
-		} else if errors.Is(err, service.ErrUserPasswordDontMatch) {
 			WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse(err.Error()))
 			return
 		}

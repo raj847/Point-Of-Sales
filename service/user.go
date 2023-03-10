@@ -53,6 +53,11 @@ func (s *UserService) ChangeAdminPassword(ctx context.Context, changePassReq ent
 		return entity.Admin{}, ErrUserPasswordDontMatch
 	}
 
+	validPassword := validatePassword(changePassReq.NewPassword)
+	if !validPassword {
+		return entity.Admin{}, ErrPasswordInvalid
+	}
+
 	hashedPassword, _ := utils.HashPassword(changePassReq.NewPassword)
 
 	err = s.userRepository.ChangeAdminPassword(ctx, existingAdmin.ID, hashedPassword)
