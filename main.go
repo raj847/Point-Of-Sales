@@ -22,6 +22,7 @@ type APIHandler struct {
 	ProductAPIHandler     *api.ProductAPI
 	TransactionAPIHandler *api.TransactionAPI
 	RekapAPIHandler       *api.RekapAPI
+	ExpensesAPIHandler    *api.ExpensesAPI
 }
 
 func main() {
@@ -66,10 +67,12 @@ func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 	productRepo := repository.NewProductRepository(db)
 	transactRepo := repository.NewTransactionRepository(db)
 	rekapRepo := repository.NewRekapRepository(db)
+	exRepo := repository.NewExpensesRepository(db)
 
 	userService := service.NewUserService(userRepo)
 	productService := service.NewProductService(productRepo)
 	transactService := service.NewTransactionService(transactRepo)
+	expensesService := service.NewExpensesService(exRepo)
 
 	rekapService := service.NewRekapService(rekapRepo, transactRepo, userRepo, minioClientConn)
 
@@ -82,12 +85,14 @@ func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 	transactionAPIHandler := api.NewTransactionAPI(transactService)
 
 	rekapApiHandler := api.NewRekapAPI(rekapRepo)
+	expensesApiHandler := api.NewExpensesAPI(expensesService, userService)
 
 	apiHandler := APIHandler{
 		UserAPIHandler:        userAPIHandler,
 		ProductAPIHandler:     productAPIHandler,
 		TransactionAPIHandler: transactionAPIHandler,
 		RekapAPIHandler:       rekapApiHandler,
+		ExpensesAPIHandler:    expensesApiHandler,
 	}
 
 	MuxRoute(mux, "POST", "/api/v1/users/admin/register", middleware.Post(http.HandlerFunc(apiHandler.UserAPIHandler.AdminRegister)))
@@ -252,7 +257,68 @@ func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 	// MuxRoute(mux, "POST", "/api/v1/users/cashier/check", middleware.Post(middleware.Auth(middleware.MustCashier(http.HandlerFunc(apiHandler.UserAPIHandler.CheckTokenCashier)))))
 
 	MuxRoute(mux, "POST", "/api/v1/users/checker", middleware.Post(middleware.Checker(http.HandlerFunc(apiHandler.UserAPIHandler.CheckToken))))
+
+	MuxRoute(mux, "DELETE", "/api/v1/bebans/delete",
+		middleware.Delete(
+			middleware.Auth(
+				middleware.MustAdmin(
+					http.HandlerFunc(apiHandler.ExpensesAPIHandler.DeleteBeban)))),
+		"?beban_id=",
+	)
+
+	MuxRoute(mux, "PUT", "/api/v1/bebans/update",
+		middleware.Put(
+			middleware.Auth(
+				middleware.MustAdmin(
+					http.HandlerFunc(apiHandler.ExpensesAPIHandler.UpdateBeban)))),
+		"?beban_id=",
+	)
+
+	MuxRoute(mux, "POST", "/api/v1/bebans/create",
+		middleware.Post(
+			middleware.Auth(
+				middleware.MustAdmin(
+					http.HandlerFunc(apiHandler.ExpensesAPIHandler.CreateNewBeban)))))
+
+	MuxRoute(mux, "GET", "/api/v1/bebans/get",
+		middleware.Get(
+			middleware.Auth(
+				middleware.MustAdmin(
+					http.HandlerFunc(apiHandler.ExpensesAPIHandler.GetAllBeban)))),
+		"?beban_id=",
+	)
+
+	MuxRoute(mux, "DELETE", "/api/v1/prives/delete",
+		middleware.Delete(
+			middleware.Auth(
+				middleware.MustAdmin(
+					http.HandlerFunc(apiHandler.ExpensesAPIHandler.DeletePrive)))),
+		"?prive_id=",
+	)
+
+	MuxRoute(mux, "PUT", "/api/v1/prives/update",
+		middleware.Put(
+			middleware.Auth(
+				middleware.MustAdmin(
+					http.HandlerFunc(apiHandler.ExpensesAPIHandler.UpdatePrive)))),
+		"?prive_id=",
+	)
+
+	MuxRoute(mux, "POST", "/api/v1/prives/create",
+		middleware.Post(
+			middleware.Auth(
+				middleware.MustAdmin(
+					http.HandlerFunc(apiHandler.ExpensesAPIHandler.CreateNewPrive)))))
+
+	MuxRoute(mux, "GET", "/api/v1/prives/get",
+		middleware.Get(
+			middleware.Auth(
+				middleware.MustAdmin(
+					http.HandlerFunc(apiHandler.ExpensesAPIHandler.GetAllPrive)))),
+		"?prive_id=",
+	)
 	return mux
+
 }
 
 func MuxRoute(mux *http.ServeMux, method string, path string, handler http.Handler, opt ...string) {

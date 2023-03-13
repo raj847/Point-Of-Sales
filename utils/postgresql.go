@@ -28,6 +28,8 @@ func ConnectDB() error {
 		entity.Transaction{},
 		entity.Rekap{},
 		entity.RekapPerDay{},
+		entity.Beban{},
+		entity.Prive{},
 	)
 
 	SetupDBConnection(conn)
