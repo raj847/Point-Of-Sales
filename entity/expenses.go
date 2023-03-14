@@ -14,6 +14,7 @@ type Beban struct {
 	Total  float64 `json:"total"`
 	UserID uint    `json:"user_id"`
 	Jenis  string  `json:"jenis"`
+	Notes  string  `json:"notes"`
 }
 
 type BebanRequest struct {
@@ -24,6 +25,7 @@ type BebanRequest struct {
 	// Lainnya float64 `json:"lainnya"`
 	Total float64 `json:"total"`
 	Jenis string  `json:"jenis"`
+	Notes string  `json:"notes"`
 }
 
 type Prive struct {

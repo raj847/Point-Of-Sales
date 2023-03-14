@@ -122,6 +122,7 @@ func (p *ExpensesAPI) CreateNewBeban(w http.ResponseWriter, r *http.Request) {
 		// 	Lainnya: beban.Lainnya,
 		Total: beban.Total,
 		Jenis: beban.Jenis,
+		Notes: beban.Notes,
 	})
 	if err != nil {
 		WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
@@ -253,6 +254,7 @@ func (p *ExpensesAPI) UpdateBeban(w http.ResponseWriter, r *http.Request) {
 		Total:  beban.Total,
 		Jenis:  beban.Jenis,
 		UserID: adminIdUint,
+		Notes:  beban.Notes,
 	})
 	if err != nil {
 		WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
