@@ -114,12 +114,14 @@ func (p *ExpensesAPI) CreateNewBeban(w http.ResponseWriter, r *http.Request) {
 	}
 
 	prod, err := p.expensesService.AddBeban(r.Context(), entity.Beban{
-		UserID:  adminIdUint,
-		Listrik: beban.Listrik,
-		Sewa:    beban.Sewa,
-		Telepon: beban.Telepon,
-		Gaji:    beban.Gaji,
-		Lainnya: beban.Lainnya,
+		UserID: adminIdUint,
+		// 	Listrik: beban.Listrik,
+		// 	Sewa:    beban.Sewa,
+		// 	Telepon: beban.Telepon,
+		// 	Gaji:    beban.Gaji,
+		// 	Lainnya: beban.Lainnya,
+		Total: beban.Total,
+		Jenis: beban.Jenis,
 	})
 	if err != nil {
 		WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
@@ -243,12 +245,14 @@ func (p *ExpensesAPI) UpdateBeban(w http.ResponseWriter, r *http.Request) {
 		Model: gorm.Model{
 			ID: uint(idInt),
 		},
-		Listrik: beban.Listrik,
-		Sewa:    beban.Sewa,
-		Telepon: beban.Telepon,
-		Gaji:    beban.Gaji,
-		Lainnya: beban.Lainnya,
-		UserID:  adminIdUint,
+		// Listrik: beban.Listrik,
+		// Sewa:    beban.Sewa,
+		// Telepon: beban.Telepon,
+		// Gaji:    beban.Gaji,
+		// Lainnya: beban.Lainnya,
+		Total:  beban.Total,
+		Jenis:  beban.Jenis,
+		UserID: adminIdUint,
 	})
 	if err != nil {
 		WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
