@@ -57,4 +57,5 @@ type UpdateTrans struct {
 	Debt   float64 `json:"change"`
 	Status string  `json:"status"`
 	Money  float64 `json:"pay"`
+	Notes  string  `json:"notes"`
 }

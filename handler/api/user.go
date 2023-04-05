@@ -101,7 +101,7 @@ func (u *UserAPI) ChangeAdminPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if changeAdminPassReq.OldPassword == "" || changeAdminPassReq.NewPassword == "" {
-		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("email or password is empty"))
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("password is empty"))
 		return
 	}
 
@@ -155,7 +155,7 @@ func (u *UserAPI) ChangeAdminPassword(w http.ResponseWriter, r *http.Request) {
 	response := map[string]any{
 		"user_id":     int(eUser.ID),
 		"role":        "admin",
-		"message":     "login success",
+		"message":     "changepass success",
 		"tokenCookie": tokenString,
 	}
 

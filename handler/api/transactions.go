@@ -167,6 +167,7 @@ func (p *TransactionAPI) UpdateTransactionDebt(w http.ResponseWriter, r *http.Re
 		Debt:   product.Debt,
 		Status: product.Status,
 		Money:  product.Money,
+		Notes:  product.Notes,
 	}, uint(idInt))
 	if err != nil {
 		WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
@@ -204,9 +205,9 @@ func (p *TransactionAPI) DeleteTransaction(w http.ResponseWriter, r *http.Reques
 	}
 
 	response := map[string]any{
-		"user_id":    adminIdUint,
-		"product_id": prodID,
-		"message":    "success delete product",
+		"user_id":        adminIdUint,
+		"transaction_id": prodID,
+		"message":        "success delete transaction",
 	}
 
 	WriteJSON(w, http.StatusOK, response)

@@ -269,6 +269,7 @@ func (c *TransactionRepository) UpdateTransDebt(trans entity.UpdateTrans, tranId
 		Debt:   trans.Debt,
 		Status: trans.Status,
 		Money:  trans.Money,
+		Notes:  trans.Notes,
 	}
 
 	err := c.db.Debug().

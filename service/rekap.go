@@ -21,12 +21,12 @@ func DoRekapEachMonth(service *RekapService) {
 	s := gocron.NewScheduler(wib)
 
 	// each last month at 22:00
-    _, err := s.Every(1).MonthLastDay().At("22:00").Do(service.Rekap)
+	_, err := s.Every(1).MonthLastDay().At("23:22").Do(service.Rekap)
 	// _, err := s.Every(5).Second().Do(service.Rekap) // simulate for testing purpose
-    if err != nil {
-        log.Fatalf("Gagal menjadwalkan tugas: %v", err)
-        return
-    }
+	if err != nil {
+		log.Fatalf("Gagal menjadwalkan tugas: %v", err)
+		return
+	}
 
 	fmt.Println("CRON JOB STARTED...")
 	s.StartAsync()
@@ -37,21 +37,21 @@ func DoRekapEveryDay(service *RekapService) {
 	s := gocron.NewScheduler(wib)
 
 	// each last month at 22:00
-    // _, err := s.Every(1).MonthLastDay().At("22:00").Do(service.Rekap)
-	_, err := s.Every(1).Day().At("21:09").Do(service.RekapPerDay) // simulate for testing purpose
-    if err != nil {
-        log.Fatalf("Gagal menjadwalkan tugas: %v", err)
-        return
-    }
+	// _, err := s.Every(1).MonthLastDay().At("22:00").Do(service.Rekap)
+	_, err := s.Every(1).Day().At("23:22").Do(service.RekapPerDay) // simulate for testing purpose
+	if err != nil {
+		log.Fatalf("Gagal menjadwalkan tugas: %v", err)
+		return
+	}
 
 	fmt.Println("CRON JOB STARTED...")
 	s.StartAsync()
 }
 
 type RekapService struct {
-	rekapRepo *repository.RekapRepository
+	rekapRepo       *repository.RekapRepository
 	transactionRepo *repository.TransactionRepository
-	userRepo *repository.UserRepository
+	userRepo        *repository.UserRepository
 
 	minioClient *minio.Client
 }
@@ -63,16 +63,16 @@ func NewRekapService(
 	minioClient *minio.Client) *RekapService {
 
 	return &RekapService{
-		rekapRepo: rekapRepo,
+		rekapRepo:       rekapRepo,
 		transactionRepo: transactRepo,
-		userRepo: userRepo,
-		minioClient: minioClient,
+		userRepo:        userRepo,
+		minioClient:     minioClient,
 	}
 }
 
 type RekapFetcher struct {
 	AdminId uint
-	Rekap entity.Rekap
+	Rekap   entity.Rekap
 }
 
 func (r *RekapService) Rekap() {
@@ -82,20 +82,20 @@ func (r *RekapService) Rekap() {
 	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, wib)
 	currentMonth := now.Month()
 
-    // Mengambil tanggal akhir bulan
-    tahun, _, _ := now.Date()
-    bulanBerikutnya := currentMonth + 1
-    if bulanBerikutnya > 12 {
-        bulanBerikutnya = 1
-        tahun++
-    }
+	// Mengambil tanggal akhir bulan
+	tahun, _, _ := now.Date()
+	bulanBerikutnya := currentMonth + 1
+	if bulanBerikutnya > 12 {
+		bulanBerikutnya = 1
+		tahun++
+	}
 
-    endOfMonth := time.Date(tahun, bulanBerikutnya, 0, 0, 0, 0, 0, wib)
+	endOfMonth := time.Date(tahun, bulanBerikutnya, 0, 0, 0, 0, 0, wib)
 
 	admins, _ := r.userRepo.GetAllAdmins()
 	// rekapFetcher := make([]RekapFetcher, 0, len(admins))
 
-	for _,admin := range admins {
+	for _, admin := range admins {
 		tmpRekap := RekapFetcher{
 			AdminId: admin.ID,
 		}
@@ -107,7 +107,7 @@ func (r *RekapService) Rekap() {
 		totalDebt := 0.0
 		totalPeopleDebt := 0
 
-		for _,v := range result {
+		for _, v := range result {
 			totalPrice += v.TotalPrice
 			totalProfit += v.TotalProfit
 			totalDebt += v.Debt
@@ -117,13 +117,13 @@ func (r *RekapService) Rekap() {
 		}
 
 		tmpRekap.Rekap = entity.Rekap{
-			AdminID: admin.ID,
-			TotalPrice: totalPrice,
-			TotalProfit: totalProfit,
-			TotalDebt: totalDebt,
+			AdminID:         admin.ID,
+			TotalPrice:      totalPrice,
+			TotalProfit:     totalProfit,
+			TotalDebt:       totalDebt,
 			TotalPeopleDebt: totalPeopleDebt,
-			StartDate: startOfMonth,
-			EndDate: endOfMonth,
+			StartDate:       startOfMonth,
+			EndDate:         endOfMonth,
 		}
 
 		// rekapFetcher = append(rekapFetcher, tmpRekap)
@@ -156,7 +156,7 @@ func (r *RekapService) RekapPerDay() {
 	admins, _ := r.userRepo.GetAllAdmins()
 	// rekapFetcher := make([]RekapFetcher, 0, len(admins))
 
-	for _,admin := range admins {
+	for _, admin := range admins {
 		tmpRekap := RekapFetcher{
 			AdminId: admin.ID,
 		}
@@ -168,7 +168,7 @@ func (r *RekapService) RekapPerDay() {
 		totalDebt := 0.0
 		totalPeopleDebt := 0
 
-		for _,v := range result {
+		for _, v := range result {
 			totalPrice += v.TotalPrice
 			totalProfit += v.TotalProfit
 			totalDebt += v.Debt
@@ -178,13 +178,13 @@ func (r *RekapService) RekapPerDay() {
 		}
 
 		tmpRekap.Rekap = entity.Rekap{
-			AdminID: admin.ID,
-			TotalPrice: totalPrice,
-			TotalProfit: totalProfit,
-			TotalDebt: totalDebt,
+			AdminID:         admin.ID,
+			TotalPrice:      totalPrice,
+			TotalProfit:     totalProfit,
+			TotalDebt:       totalDebt,
 			TotalPeopleDebt: totalPeopleDebt,
-			StartDate: startTime,
-			EndDate: endTime,
+			StartDate:       startTime,
+			EndDate:         endTime,
 		}
 
 		// rekapFetcher = append(rekapFetcher, tmpRekap)
@@ -201,14 +201,14 @@ func (r *RekapService) RekapPerDay() {
 
 		// conert into recap per day
 		rekapPerDay := entity.RekapPerDay{
-			AdminID: tmpRekap.Rekap.AdminID,
-			TotalPrice: tmpRekap.Rekap.TotalPrice,
-			TotalProfit: tmpRekap.Rekap.TotalProfit,
-			TotalDebt: tmpRekap.Rekap.TotalDebt,
+			AdminID:         tmpRekap.Rekap.AdminID,
+			TotalPrice:      tmpRekap.Rekap.TotalPrice,
+			TotalProfit:     tmpRekap.Rekap.TotalProfit,
+			TotalDebt:       tmpRekap.Rekap.TotalDebt,
 			TotalPeopleDebt: tmpRekap.Rekap.TotalPeopleDebt,
-			StartDate: tmpRekap.Rekap.StartDate,
-			EndDate: tmpRekap.Rekap.EndDate,
-			LinkPdf: tmpRekap.Rekap.LinkPdf,
+			StartDate:       tmpRekap.Rekap.StartDate,
+			EndDate:         tmpRekap.Rekap.EndDate,
+			LinkPdf:         tmpRekap.Rekap.LinkPdf,
 		}
 
 		err = r.rekapRepo.AddRekapPerDay(rekapPerDay)
@@ -220,7 +220,7 @@ func (r *RekapService) RekapPerDay() {
 
 const rekapFolderUploadPath = "./rekap-pdf"
 
-func GenerateRekapPDF(rekap entity.Rekap, minioClient *minio.Client) (string, error ){
+func GenerateRekapPDF(rekap entity.Rekap, minioClient *minio.Client) (string, error) {
 	fileName := fmt.Sprintf("rekap-%d-%d-%d.pdf", rekap.AdminID, rekap.StartDate.Month(), rekap.StartDate.Year())
 
 	fmt.Println("filename yg akan di generate = ", fileName)
@@ -234,13 +234,13 @@ func GenerateRekapPDF(rekap entity.Rekap, minioClient *minio.Client) (string, er
 	pdf.CellFormat(190, 10, fileName, "", 1, "C", false, 0, "")
 
 	pdf.SetFont("Arial", "", 12)
-    pdf.CellFormat(20, 10, "Admin ID", "1", 0, "", false, 0, "")
-    pdf.CellFormat(50, 10, "Total Price", "1", 0, "", false, 0, "")
-    pdf.CellFormat(50, 10, "Total Profit", "1", 0, "", false, 0, "")
-    pdf.CellFormat(50, 10, "Total Debt", "1", 0, "", false, 0, "")
-    pdf.CellFormat(40, 10, "Debt", "1", 0, "", false, 0, "")
-    pdf.CellFormat(40, 10, "Start Date", "1", 0, "", false, 0, "")
-    pdf.CellFormat(40, 10, "End Date", "1", 1, "", false, 0, "")
+	pdf.CellFormat(20, 10, "Admin ID", "1", 0, "", false, 0, "")
+	pdf.CellFormat(50, 10, "Total Price", "1", 0, "", false, 0, "")
+	pdf.CellFormat(50, 10, "Total Profit", "1", 0, "", false, 0, "")
+	pdf.CellFormat(50, 10, "Total Debt", "1", 0, "", false, 0, "")
+	pdf.CellFormat(40, 10, "Debt", "1", 0, "", false, 0, "")
+	pdf.CellFormat(40, 10, "Start Date", "1", 0, "", false, 0, "")
+	pdf.CellFormat(40, 10, "End Date", "1", 1, "", false, 0, "")
 
 	startDate := fmt.Sprintf("%d-%d-%d", rekap.StartDate.Year(), rekap.StartDate.Month(), rekap.StartDate.Day())
 	endDate := fmt.Sprintf("%d-%d-%d", rekap.EndDate.Year(), rekap.EndDate.Month(), rekap.EndDate.Day())
@@ -259,7 +259,7 @@ func GenerateRekapPDF(rekap entity.Rekap, minioClient *minio.Client) (string, er
 
 	err := pdf.OutputFileAndClose(fmt.Sprintf("%s/%s", rekapFolderUploadPath, fileName))
 	if err != nil {
-		fmt.Println("error happen = " , err)
+		fmt.Println("error happen = ", err)
 		return "", err
 	}
 
@@ -272,7 +272,7 @@ func GenerateRekapPDF(rekap entity.Rekap, minioClient *minio.Client) (string, er
 
 	fileName = uuid.New().String() + "-" + fileName
 	fmt.Println(fileName)
-	fileLinkUploaded, err := UploadToCloud(context.Background(),  minioClient, file, fileName)
+	fileLinkUploaded, err := UploadToCloud(context.Background(), minioClient, file, fileName)
 	if err != nil {
 		log.Println("gagal upload ke cloud")
 	}
