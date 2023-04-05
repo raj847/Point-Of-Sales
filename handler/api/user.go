@@ -451,32 +451,22 @@ func (p *UserAPI) DeleteCashier(w http.ResponseWriter, r *http.Request) {
 	WriteJSON(w, http.StatusOK, response)
 }
 
-// func (p *UserAPI) UpdateOnline(w http.ResponseWriter, r *http.Request) {
-// 	var cashier entity.CashierLogin
+func (p *UserAPI) Badalakingkong(w http.ResponseWriter, r *http.Request) {
+	kasirIdUint := r.Context().Value("id").(uint)
+	if kasirIdUint == 0 {
+		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("invalid user id"))
+		return
+	}
 
-// 	err := json.NewDecoder(r.Body).Decode(&cashier.Online)
-// 	if err != nil {
-// 		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("invalid product request"))
-// 		return
-// 	}
+	err := p.userService.Badalakingkong(r.Context(), uint(kasirIdUint))
+	if err != nil {
+		WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
+		return
+	}
 
-// 	adminIdUint := r.Context().Value("id").(uint)
-// 	if adminIdUint == 0 {
-// 		WriteJSON(w, http.StatusBadRequest, entity.NewErrorResponse("invalid user id"))
-// 		return
-// 	}
+	response := map[string]any{
+		"message": "jadilah offline",
+	}
 
-// 	cashiers, err := p.userService.UpdateOnline(r.Context(), adminIdUint, cashier.Online)
-// 	if err != nil {
-// 		WriteJSON(w, http.StatusInternalServerError, entity.NewErrorResponse("error internal server"))
-// 		return
-// 	}
-
-// 	response := map[string]any{
-// 		"cashier_id": adminIdUint,
-// 		"online":     cashiers.Online,
-// 		"message":    "success update product",
-// 	}
-
-// 	WriteJSON(w, http.StatusOK, response)
-// }
+	WriteJSON(w, http.StatusOK, response)
+}

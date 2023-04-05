@@ -89,6 +89,7 @@ func (r *UserRepository) GetCashierByUsername(ctx context.Context, username stri
 	if err != nil {
 		return entity.Cashier{}, err
 	}
+	r.db.Model(res).Where("username = ?", username).Update("online", true)
 
 	return res, nil
 }
@@ -136,30 +137,7 @@ func (r *UserRepository) GetCashierbyAdmin(ctx context.Context, id uint) ([]enti
 	return listCashier, nil
 }
 
-// func (r *UserRepository) UpdateOnline(ctx context.Context, id uint, online bool) (entity.Cashier, error) {
-// 	dontil := entity.Cashier{}
-// 	err := r.db.WithContext(ctx).Table("cashiers").Where("id = ?", id).Update("online", online).Error
-// 	if err != nil {
-// 		return entity.Cashier{}, err
-// 	}
-
-// 	return dontil, nil
-// }
-
-// func (r *UserRepository) CheckTokenAdmin(token entity.CheckTokenAdmin) (error) {
-// 	err := r.db.Create(&token).Error
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-// }
-
-// func (r *UserRepository) CheckTokenCashier(token entity.CheckTokenCashier) (error) {
-// 	err := r.db.Create(&token).Error
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-// }
+func (r *UserRepository) Badalakingkong(ctx context.Context, id uint) error {
+	err := r.db.Table("cashiers").Where("id", id).Update("online", false).Error
+	return err
+}

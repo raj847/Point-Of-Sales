@@ -97,7 +97,7 @@ func RunServer(db *gorm.DB, mux *http.ServeMux) *http.ServeMux {
 
 	MuxRoute(mux, "POST", "/api/v1/users/admin/register", middleware.Post(http.HandlerFunc(apiHandler.UserAPIHandler.AdminRegister)))
 	MuxRoute(mux, "POST", "/api/v1/users/admin/login", middleware.Post(http.HandlerFunc(apiHandler.UserAPIHandler.AdminLogin)))
-
+	MuxRoute(mux, "PUT", "/api/v1/users/kasir/badalakingkong", middleware.Put(middleware.MustCashier(http.HandlerFunc(apiHandler.UserAPIHandler.Badalakingkong))))
 	MuxRoute(mux, "GET", "/api/v1/cashiers",
 		middleware.Get(
 			middleware.MustAdmin(
